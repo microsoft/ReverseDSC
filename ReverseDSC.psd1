@@ -8,7 +8,7 @@
 @{
     ModuleVersion = '1.7.3.0'
     GUID = '6c1176a0-4fac-4134-8ca2-3fa8a21a7b90'
-    Author = 'Nik Charlebois'
+    Author = 'Microsoft Corporation'
     CompanyName = 'Microsoft Corporation'
     Copyright = '(c) 2015-2017 Microsoft Corporation. All rights reserved.'
     Description = 'This DSC module is used to extract the DSC Configuration of existing environments.'
@@ -34,7 +34,7 @@
             LicenseUri = ''
 
             # A URL to the main website for this project.
-            ProjectUri = 'http://aka.ms/ReverseDSC'
+            ProjectUri = 'https://Github.com/Microsoft/ReverseDSC'
 
             # A URL to an icon representing this module.
             # IconUri = ''
