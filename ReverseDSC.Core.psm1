@@ -1,4 +1,4 @@
-$Global:CredsRepo = @{}
+$Global:CredsRepo = @()
 
 <## This function receives the path to a DSC module, and a parameter name. It then returns the type associated with the parameter (int, string, etc.). #>
 function Get-DSCParamType
@@ -309,48 +309,65 @@ function Get-ResourceFriendlyName()
 }
 
 <# Region Helper Methods #>
-function Get-Credentials([string] $userName)
+function Get-Credentials([string] $UserName)
 {
-    if($Global:CredsRepo.Contains($userName.ToLower()))
+    if($Global:CredsRepo.Contains($UserName.ToLower()))
     {
-        return $Global:CredsRepo[$userName]
+        return $UserName.ToLower()
     }
-    else
-    {
-        $creds = Get-Credential -Message "Please Provide Credentials for $userName" -UserName $userName
-        $Global:CredsRepo.Add($userName.ToLower(), $creds)
-        return $creds
-    }
+    return $null
 }
 
-function Resolve-Credentials([string] $userName)
+function Resolve-Credentials([string] $UserName)
 {
-    $userNameParts = $userName.Split('\')
+    $userNameParts = $UserName.ToLower().Split('\')
     if($userNameParts.Length -gt 1)
     {
-        return "`$Creds" + $userNameParts[1]
+        return "`$Creds" + $userNameParts[1].Replace("-","_").Replace(".", "_")
     }
-    return "`$Creds" + $userName    
+    return "`$Creds" + $UserName.Replace("-","_").Replace(".", "_")    
 }
 
-function Save-Credentials([System.Management.Automation.PSCredential] $creds)
+function Save-Credentials([string] $UserName)
 {
-    if($Global:CredsRepo.Contains($creds.UserName.ToLower()))
+    if(!$Global:CredsRepo.Contains($UserName.ToLower()))
     {
-        return $true
-    }
-    else
-    {
-        $Global:CredsRepo.Add($creds.UserName.ToLower(), $creds)
-        return $false
+        $Global:CredsRepo += $UserName.ToLower()
     }
 }
 
 function Test-Credentials([string] $UserName)
 {
-    if($Global:CredsRepo.Contains($creds.UserName.ToLower()))
+    if($Global:CredsRepo.Contains($UserName.ToLower()))
     {
         return $true
     }
     return $false
+}
+
+function Convert-DSCStringParamToVariable([string]$DSCBlock, [string]$ParameterName)
+{
+    $startPosition = $DSCBlock.IndexOf($ParameterName);
+    $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
+
+    if($startPosition -lt 0)
+    {
+        $startPosition = $DSCBlock.IndexOf("'", $startPosition)
+    }
+
+    if($startPosition -ge 0)
+    {
+        $endPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
+        if($endPosition -lt 0)
+        {
+            $endPosition = $DSCBlock.IndexOf("'", $startPosition + 1)
+        }
+
+        if($endPosition -ge 0)
+        {
+            $DSCBlock = $DSCBlock.Remove($startPosition, 1)
+            $DSCBlock = $DSCBlock.Remove($endPosition-1, 1)
+        }
+    }
+    return $DSCBlock
 }

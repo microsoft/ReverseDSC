@@ -24,7 +24,8 @@
                         "Get-Credentials",
                         "Resolve-Credentials",
                         "Save-Credentials",
-                        "Test-Credentials")
+                        "Test-Credentials",
+                        "Convert-DSCStringParamToVariable")
     AliasesToExport = @()
     PrivateData = @{
         PSData = @{
