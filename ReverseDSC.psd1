@@ -6,7 +6,7 @@
 # Generated on: 11/07/2017
 #
 @{
-    ModuleVersion = '1.7.3.0'
+    ModuleVersion = '1.9.0.0'
     GUID = '6c1176a0-4fac-4134-8ca2-3fa8a21a7b90'
     Author = 'Microsoft Corporation'
     CompanyName = 'Microsoft Corporation'
@@ -22,8 +22,9 @@
                         "Export-TargetResource",
                         "Get-ResourceFriendlyName",
                         "Get-Credentials",
-                        "Resolve-Credentials"
-                        "Save-Credentials")
+                        "Resolve-Credentials",
+                        "Save-Credentials",
+                        "Test-Credentials")
     AliasesToExport = @()
     PrivateData = @{
         PSData = @{

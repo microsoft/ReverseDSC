@@ -345,3 +345,12 @@ function Save-Credentials([System.Management.Automation.PSCredential] $creds)
         return $false
     }
 }
+
+function Test-Credentials([string] $UserName)
+{
+    if($Global:CredsRepo.Contains($creds.UserName.ToLower()))
+    {
+        return $true
+    }
+    return $false
+}
