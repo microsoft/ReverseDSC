@@ -371,3 +371,69 @@ function Convert-DSCStringParamToVariable([string]$DSCBlock, [string]$ParameterN
     }
     return $DSCBlock
 }
+
+<# Region ConfigurationData Methods #>
+$Global:ConfigurationData = @{}
+
+function Add-ConfigurationDataEntry($Node, $Key, $Value)
+{
+    if($null -eq $Global:ConfigurationData[$Node])
+    {
+        $Global:ConfigurationData.Add($Node, @{$Key = $Value})
+    }
+    else
+    {
+        if(!$Global:ConfigurationData[$Node].ContainsKey($Key))
+        {
+            $Global:ConfigurationData[$Node].Add($Key, $Value)
+        }
+    }
+}
+
+function New-ConfigurationDataDocument($Path)
+{
+    $psd1Content = "@{`r`n"
+    $psd1Content += "    AllNodes = @(`r`n"
+    foreach($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -ne "nonnodedata"})
+    {
+        $psd1Content += "        @{`r`n"
+        $psd1Content += "            NodeName = `"" + $node + "`"`r`n"
+        $psd1Content += "            PSDscAllowPlainTextPassword = `$true;`r`n"
+        $psd1Content += "            PSDscAllowDomainUser = `$true;`r`n`r`n"
+        $psd1Content += "            #region Parameters`r`n"       
+        $keyValuePair = $Global:ConfigurationData[$node]
+        foreach($key in $keyValuePair.Keys)
+        {
+            $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key] + "`"`r`n"
+        }
+
+        $psd1Content += "        },`r`n" 
+    }
+    if($psd1Content.EndsWith(",`r`n"))
+    {
+        $psd1Content = $psd1Content.Remove($psd1Content.Length-3, 1)
+    }
+    $psd1Content += "    )`r`n"
+
+    $psd1Content += "    NonNodeData = @(`r`n"
+    foreach($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -eq "nonnodedata"})
+    {
+        $psd1Content += "        @{`r`n"     
+        $keyValuePair = $Global:ConfigurationData[$node]
+        foreach($key in $keyValuePair.Keys)
+        {
+            $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key] + "`"`r`n"
+        }
+
+        $psd1Content += "        },`r`n" 
+    }
+    if($psd1Content.EndsWith(",`r`n"))
+    {
+        $psd1Content = $psd1Content.Remove($psd1Content.Length-3, 1)
+    }
+    $psd1Content += "    )`r`n"
+
+    $psd1Content += "}"
+
+    $psd1Content | Out-File -FilePath $Path
+}
