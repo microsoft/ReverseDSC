@@ -18,7 +18,6 @@ function Get-DSCParamType
 
         if ($_.Name -eq "Get-TargetResource") 
         {
-            $function = $_
             $functionAst = [System.Management.Automation.Language.Parser]::ParseInput($_.Body, [ref] $tokens, [ref] $errors)
 
             $parameters = $functionAst.FindAll( {$args[0] -is [System.Management.Automation.Language.ParameterAst]}, $true)
@@ -67,8 +66,7 @@ function Get-DSCBlock
     )
 
     $dscBlock = ""
-    $Params.Keys | % { 
-        $paramName = $_
+    $Params.Keys | ForEach-Object { 
         if($UseGetTargetResource)
         {
             $paramType = Get-DSCParamType -ModulePath $ModulePath -ParamName "`$$_"            
@@ -120,7 +118,7 @@ function Get-DSCBlock
         {
             $value = "@{"
             $hash = $Params.Item($_)
-            $hash.Keys | % {
+            $hash.Keys | foreach-object {
                 try
                 {
                     $value += $_ + " = `"" + $hash.Item($_) + "`"; "
@@ -137,7 +135,7 @@ function Get-DSCBlock
         {
             $value = "@("
             $hash = $Params.Item($_)
-            $hash| % {
+            $hash| ForEach-Object {
                 $value += "`"" + $_ + "`","
             }
             if($value.Length -gt 2)
@@ -181,7 +179,6 @@ function Get-DSCFakeParameters{
 
         if ($_.Name -eq "Get-TargetResource") 
         {
-            $function = $_
             $functionAst = [System.Management.Automation.Language.Parser]::ParseInput($_.Body, [ref] $tokens, [ref] $errors)
 
             $parameters = $functionAst.FindAll( {$args[0] -is [System.Management.Automation.Language.ParameterAst]}, $true)
@@ -258,7 +255,7 @@ function Export-TargetResource()
         [parameter(Mandatory = $true)] [System.Collections.Hashtable] $MandatoryParameters,
         [parameter(Mandatory = $false)] [System.String] $DependsOnClause
     )
-    $ModulePath = (Get-DscResource $ResourceName | select Path).Path.ToString()
+    $ModulePath = (Get-DscResource $ResourceName | select-object Path).Path.ToString()
     $friendlyName = Get-ResourceFriendlyName -ModulePath $ModulePath
     $fakeParameters = Get-DSCFakeParameters -ModulePath $ModulePath
 
@@ -294,9 +291,6 @@ function Get-ResourceFriendlyName()
     )
 
     $tokens = $null 
-    $errors = $null
-    $schemaPath = $ModulePath.Replace(".psm1", ".schema.mof")
-    $ast = [System.Management.Automation.Language.Parser]::ParseFile($schemaPath, [ref] $tokens, [ref] $errors)
 
     for($i = 0; $i -lt $tokens.Length; $i++)
     {
