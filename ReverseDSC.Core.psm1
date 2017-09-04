@@ -384,6 +384,28 @@ function Add-ConfigurationDataEntry($Node, $Key, $Value)
     }
 }
 
+function Get-ConfigurationDataEntry($Node, $Key)
+{
+    <# If node is null, then search in all nodes and return first result found. #>    
+    if($null -eq $Node)
+    {
+        foreach($Node in $Global:ConfigurationData.Keys)
+        {
+            if($Global:ConfigurationData[$Node].ContainsKey($Key))
+            {
+                return $Global:ConfigurationData[$Node][$Key]
+            }
+        }
+    }
+    else
+    {
+        if($Global:ConfigurationData[$Node].ContainsKey($Key))
+        {
+            return $Global:ConfigurationData[$Node][$Key]
+        }
+    }
+}
+
 function New-ConfigurationDataDocument($Path)
 {
     $psd1Content = "@{`r`n"
@@ -407,26 +429,7 @@ function New-ConfigurationDataDocument($Path)
     {
         $psd1Content = $psd1Content.Remove($psd1Content.Length-3, 1)
     }
-    $psd1Content += "    )`r`n"
-
-    $psd1Content += "    NonNodeData = @(`r`n"
-    foreach($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -eq "nonnodedata"})
-    {
-        $psd1Content += "        @{`r`n"     
-        $keyValuePair = $Global:ConfigurationData[$node]
-        foreach($key in $keyValuePair.Keys)
-        {
-            $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key] + "`"`r`n"
-        }
-
-        $psd1Content += "        },`r`n" 
-    }
-    if($psd1Content.EndsWith(",`r`n"))
-    {
-        $psd1Content = $psd1Content.Remove($psd1Content.Length-3, 1)
-    }
-    $psd1Content += "    )`r`n"
-
+    $psd1Content += "    )`r`n"    
     $psd1Content += "}"
 
     $psd1Content | Out-File -FilePath $Path

@@ -27,7 +27,8 @@
                         "Test-Credentials",
                         "Convert-DSCStringParamToVariable",
                         "New-ConfigurationDataDocument",
-                        "Add-ConfigurationDataEntry")
+                        "Add-ConfigurationDataEntry",
+                        "Get-ConfigurationDataEntry")
     AliasesToExport = @()
     PrivateData = @{
         PSData = @{
