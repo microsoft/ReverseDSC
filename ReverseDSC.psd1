@@ -28,7 +28,8 @@
                         "Convert-DSCStringParamToVariable",
                         "New-ConfigurationDataDocument",
                         "Add-ConfigurationDataEntry",
-                        "Get-ConfigurationDataEntry")
+                        "Get-ConfigurationDataEntry",
+                        "Add-ReverseDSCUserName")
     AliasesToExport = @()
     PrivateData = @{
         PSData = @{

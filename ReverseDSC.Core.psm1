@@ -420,7 +420,13 @@ function New-ConfigurationDataDocument($Path)
         $keyValuePair = $Global:ConfigurationData[$node]
         foreach($key in $keyValuePair.Keys)
         {
-            $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key] + "`"`r`n"
+            if($keyValuePair[$key].ToString().StartsWith("@(") -or $keyValuePair[$key].ToString().StartsWith("`$"))
+            {
+                $psd1Content += "            " + $key + " = " + $keyValuePair[$key] + "`r`n"
+            }
+            else {                
+                $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key] + "`"`r`n"
+            }
         }
 
         $psd1Content += "        },`r`n" 
@@ -433,4 +439,15 @@ function New-ConfigurationDataDocument($Path)
     $psd1Content += "}"
 
     $psd1Content | Out-File -FilePath $Path
+}
+
+<# Region User based Methods #>
+$Global:AllUsers = @()
+
+function Add-ReverseDSCUserName($UserName)
+{
+    if(!$Global:AllUsers.Contains($UserName))
+    {
+        $Global:AllUsers += $UserName
+    }
 }
