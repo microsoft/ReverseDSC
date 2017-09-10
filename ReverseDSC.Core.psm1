@@ -369,19 +369,17 @@ function Convert-DSCStringParamToVariable([string]$DSCBlock, [string]$ParameterN
 <# Region ConfigurationData Methods #>
 $Global:ConfigurationData = @{}
 
-function Add-ConfigurationDataEntry($Node, $Key, $Value)
+function Add-ConfigurationDataEntry($Node, $Key, $Value, $Description)
 {
     if($null -eq $Global:ConfigurationData[$Node])
     {
-        $Global:ConfigurationData.Add($Node, @{$Key = $Value})
+        $Global:ConfigurationData.Add($Node, @{})
+        $Global:ConfigurationData[$Node].Add("Entries", @{})
     }
-    else
+    if(!$Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
     {
-        if(!$Global:ConfigurationData[$Node].ContainsKey($Key))
-        {
-            $Global:ConfigurationData[$Node].Add($Key, $Value)
-        }
-    }
+        $Global:ConfigurationData[$Node].Entries.Add($Key, @{Value = $Value; Description = $Description})
+    }    
 }
 
 function Get-ConfigurationDataEntry($Node, $Key)
@@ -391,17 +389,17 @@ function Get-ConfigurationDataEntry($Node, $Key)
     {
         foreach($Node in $Global:ConfigurationData.Keys)
         {
-            if($Global:ConfigurationData[$Node].ContainsKey($Key))
+            if($Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
             {
-                return $Global:ConfigurationData[$Node][$Key]
+                return $Global:ConfigurationData[$Node].Entries[$Key]
             }
         }
     }
     else
     {
-        if($Global:ConfigurationData[$Node].ContainsKey($Key))
+        if($Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
         {
-            return $Global:ConfigurationData[$Node][$Key]
+            return $Global:ConfigurationData[$Node].Entries[$Key]
         }
     }
 }
@@ -415,17 +413,23 @@ function New-ConfigurationDataDocument($Path)
         $psd1Content += "        @{`r`n"
         $psd1Content += "            NodeName = `"" + $node + "`"`r`n"
         $psd1Content += "            PSDscAllowPlainTextPassword = `$true;`r`n"
-        $psd1Content += "            PSDscAllowDomainUser = `$true;`r`n`r`n"
+        $psd1Content += "            PSDscAllowDomainUser = `$true;`r`n"
+        $psd1Content += "            # CertificateFile = `"\\<location>\<file>.cer`";`r`n"
+        $psd1Content += "            # Thumbprint = `xxxxxxxxxxxxxxxxxxxxxxx`r`n"
         $psd1Content += "            #region Parameters`r`n"       
-        $keyValuePair = $Global:ConfigurationData[$node]
+        $keyValuePair = $Global:ConfigurationData[$node].Entries
         foreach($key in $keyValuePair.Keys)
         {
+            if($null -ne $keyValuePair[$key].Description)
+            {
+                $psd1Content += "            # " + $keyValuePair[$key].Description +  "`r`n"
+            }
             if($keyValuePair[$key].ToString().StartsWith("@(") -or $keyValuePair[$key].ToString().StartsWith("`$"))
             {
-                $psd1Content += "            " + $key + " = " + $keyValuePair[$key] + "`r`n"
+                $psd1Content += "            " + $key + " = " + $keyValuePair[$key].Value + "`r`n`r`n"
             }
             else {                
-                $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key] + "`"`r`n"
+                $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key].Value + "`"`r`n`r`n"
             }
         }
 
