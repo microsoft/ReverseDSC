@@ -420,13 +420,18 @@ function New-ConfigurationDataDocument($Path)
         $keyValuePair = $Global:ConfigurationData[$node].Entries
         foreach($key in $keyValuePair.Keys)
         {
+            $test = $keyValuePair[$key]
             if($null -ne $keyValuePair[$key].Description)
             {
                 $psd1Content += "            # " + $keyValuePair[$key].Description +  "`r`n"
             }
-            if($keyValuePair[$key].ToString().StartsWith("@(") -or $keyValuePair[$key].ToString().StartsWith("`$"))
+            if($keyValuePair[$key].Value.ToString().StartsWith("@(") -or $keyValuePair[$key].Value.ToString().StartsWith("`$"))
             {
                 $psd1Content += "            " + $key + " = " + $keyValuePair[$key].Value + "`r`n`r`n"
+            }
+            elseif($keyValuePair[$key].Value.GetType().FullName -eq "System.Object[]")
+            {            
+                $psd1Content += "            " + $key + " = " + (ConvertTo-ConfigurationDataString $keyValuePair[$key].Value)
             }
             else {                
                 $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key].Value + "`"`r`n`r`n"
@@ -439,10 +444,74 @@ function New-ConfigurationDataDocument($Path)
     {
         $psd1Content = $psd1Content.Remove($psd1Content.Length-3, 1)
     }
+    $psd1Content += "    )`r`n" 
+    $psd1Content += "    NonNodeData = @(`r`n"
+    foreach($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -eq "nonnodedata"})
+    {
+        $psd1Content += "        @{`r`n"
+        $keyValuePair = $Global:ConfigurationData[$node].Entries
+        foreach($key in $keyValuePair.Keys)
+        {
+            if($null -ne $keyValuePair[$key].Description)
+            {
+                $psd1Content += "            # " + $keyValuePair[$key].Description +  "`r`n"
+            }
+            if($keyValuePair[$key].Value.ToString().StartsWith("@(") -or $keyValuePair[$key].Value.ToString().StartsWith("`$"))
+            {
+                $psd1Content += "            " + $key + " = " + $keyValuePair[$key].Value + "`r`n`r`n"
+            }
+            else {                
+                $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key].Value + "`"`r`n`r`n"
+            }
+        }
+        $psd1Content += "        }`r`n" 
+    }
+    if($psd1Content.EndsWith(",`r`n"))
+    {
+        $psd1Content = $psd1Content.Remove($psd1Content.Length-3, 1)
+    }
     $psd1Content += "    )`r`n"    
     $psd1Content += "}"
 
     $psd1Content | Out-File -FilePath $Path
+}
+
+function ConvertTo-ConfigurationDataString($PSObject)
+{
+    $configDataContent = ""
+    $objectType = $PSObject.GetType().FullName
+    switch($objectType)
+    {
+        "System.String"
+        {
+            $configDataContent += "`"" + $PSObject + "`";`r`n"
+        }
+        "System.Object[]"
+        {
+            $configDataContent += "            @(`r`n"
+            foreach($entry in $PSObject)
+            {
+                $configDataContent += ConvertTo-ConfigurationDataString $entry
+            }
+            if($configDataContent.EndsWith(",`r`n"))
+            {
+                $configDataContent = $configDataContent.Remove($configDataContent.Length-3, 1)
+            }
+            $configDataContent += "            )`r`n"
+        }
+
+        "System.Collections.Hashtable"
+        {
+            $configDataContent += "            @{`r`n"
+            foreach($key in $PSObject.Keys)
+            {                
+                $configDataContent += "                " + $key + " = "
+                $configDataContent += ConvertTo-ConfigurationDataString $PSObject[$key]
+            }
+            $configDataContent += "            },`r`n"
+        }
+    }
+    return $configDataContent
 }
 
 <# Region User based Methods #>
