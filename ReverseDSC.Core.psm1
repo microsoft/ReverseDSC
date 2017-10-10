@@ -317,9 +317,9 @@ function Resolve-Credentials([string] $UserName)
     $userNameParts = $UserName.ToLower().Split('\')
     if($userNameParts.Length -gt 1)
     {
-        return "`$Creds" + $userNameParts[1].Replace("-","_").Replace(".", "_")
+        return "`$Creds" + $userNameParts[1].Replace("-","_").Replace(".", "_").Replace(" ", "").Replace("@","")
     }
-    return "`$Creds" + $UserName.Replace("-","_").Replace(".", "_")    
+    return "`$Creds" + $UserName.Replace("-","_").Replace(".", "_").Replace(" ", "").Replace("@","")
 }
 
 function Save-Credentials([string] $UserName)
@@ -420,7 +420,6 @@ function New-ConfigurationDataDocument($Path)
         $keyValuePair = $Global:ConfigurationData[$node].Entries
         foreach($key in $keyValuePair.Keys)
         {
-            $test = $keyValuePair[$key]
             if($null -ne $keyValuePair[$key].Description)
             {
                 $psd1Content += "            # " + $keyValuePair[$key].Description +  "`r`n"
