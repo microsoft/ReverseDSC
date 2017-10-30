@@ -271,10 +271,23 @@ function Export-TargetResource()
 
     Import-Module $ModulePath
     $results = Get-TargetResource @finalParams
+
+    $DSCBlockParams = @{}
+    foreach($fakeParameter in $fakeParameters.Keys)
+    {
+        if($results[$fakeParameter])
+        {
+            $DSCBlockParams.Add($fakeParameter,$results.Get_Item($fakeParameter))
+        }
+        else 
+        {
+            $DSCBlockParams.Add($fakeParameter,"")
+        }
+    }
     
     $exportContent = "        " + $friendlyName + " " + [System.Guid]::NewGuid().ToString() + "`r`n"
     $exportContent += "        {`r`n"
-    $exportContent += Get-DSCBlock -ModulePath $ModulePath -Params $results
+    $exportContent += Get-DSCBlock -ModulePath $ModulePath -Params $DSCBlockParams
     if($null -ne $DependsOnClause)
     {
         $exportContent += $DependsOnClause
