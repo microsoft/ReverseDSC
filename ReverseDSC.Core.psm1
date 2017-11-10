@@ -73,7 +73,14 @@ function Get-DSCBlock
         }
         else
         {
-            $paramType = $Params[$_].GetType().Name
+            if($null -ne $Params[$_])
+            {
+                $paramType = $Params[$_].GetType().Name
+            }
+            else
+            {
+                $paramType = Get-DSCParamType -ModulePath $ModulePath -ParamName "`$$_"   
+            }
         }        
 
         $value = $null
