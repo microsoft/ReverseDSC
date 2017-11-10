@@ -278,10 +278,23 @@ function Export-TargetResource()
 
     Import-Module $ModulePath
     $results = Get-TargetResource @finalParams
+
+    $DSCBlockParams = @{}
+    foreach($fakeParameter in $fakeParameters.Keys)
+    {
+        if($results[$fakeParameter])
+        {
+            $DSCBlockParams.Add($fakeParameter,$results.Get_Item($fakeParameter))
+        }
+        else 
+        {
+            $DSCBlockParams.Add($fakeParameter,"")
+        }
+    }
     
     $exportContent = "        " + $ResourceName + " " + [System.Guid]::NewGuid().ToString() + "`r`n"
     $exportContent += "        {`r`n"
-    $exportContent += Get-DSCBlock -ModulePath $ModulePath -Params $results
+    $exportContent += Get-DSCBlock -ModulePath $ModulePath -Params $DSCBlockParams
     if($null -ne $DependsOnClause)
     {
         $exportContent += $DependsOnClause
@@ -290,7 +303,7 @@ function Export-TargetResource()
     return $exportContent
 }
 
-function Get-ResourceFriendlyName()
+function Get-ResourceFriendlyName
 {
     [CmdletBinding()]
     param(
@@ -298,6 +311,9 @@ function Get-ResourceFriendlyName()
     )
 
     $tokens = $null 
+    $errors = $null
+    $schemaPath = $ModulePath.Replace(".psm1", ".schema.mof")
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($schemaPath, [ref] $tokens, [ref] $errors)
 
     for($i = 0; $i -lt $tokens.Length; $i++)
     {
