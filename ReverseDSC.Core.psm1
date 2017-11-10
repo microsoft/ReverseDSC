@@ -279,7 +279,7 @@ function Export-TargetResource()
     Import-Module $ModulePath
     $results = Get-TargetResource @finalParams
     
-    $exportContent = "        " + $friendlyName + " " + [System.Guid]::NewGuid().ToString() + "`r`n"
+    $exportContent = "        " + $ResourceName + " " + [System.Guid]::NewGuid().ToString() + "`r`n"
     $exportContent += "        {`r`n"
     $exportContent += Get-DSCBlock -ModulePath $ModulePath -Params $results
     if($null -ne $DependsOnClause)
