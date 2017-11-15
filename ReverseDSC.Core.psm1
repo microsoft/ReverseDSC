@@ -151,15 +151,34 @@ function Get-DSCBlock
             }
             $value += ")"
         }
+        elseif($paramType -eq "Object[]")
+        {
+            $array = $hash = $Params.Item($_)
+            $value = "@("
+            $array | ForEach-Object{
+                $value += $_ + ","
+            }
+            if($value.Length -gt 3)
+            {
+                $value = $value.Substring(0,$value.Length -1)
+            }
+            $value += ")"
+        }
         else
         {
-            if($Params[$_].GetType().BaseType.Name -eq "Enum")
+            if($null -eq $Params[$_])
             {
-                $value = "`"" + $Params.Item($_) + "`""
+                $value = "`$null"
             }
-            else
-            {
-                $value = $Params.Item($_)
+            else {
+                if($Params[$_].GetType().BaseType.Name -eq "Enum")
+                {
+                    $value = "`"" + $Params.Item($_) + "`""
+                }
+                else
+                {
+                    $value = $Params.Item($_)
+                }
             }
         }
         $dscBlock += "            " + $_  + " = " + $value + ";`r`n"
@@ -427,7 +446,7 @@ function Get-ConfigurationDataEntry($Node, $Key)
     }
 }
 
-function New-ConfigurationDataDocument($Path)
+function Get-ConfigurationDataContent
 {
     $psd1Content = "@{`r`n"
     $psd1Content += "    AllNodes = @(`r`n"
@@ -494,8 +513,12 @@ function New-ConfigurationDataDocument($Path)
     }
     $psd1Content += "    )`r`n"    
     $psd1Content += "}"
+    return $psd1Content
+}
 
-    $psd1Content | Out-File -FilePath $Path
+function New-ConfigurationDataDocument($Path)
+{   
+    Get-ConfigurationDataContent | Out-File -FilePath $Path
 }
 
 function ConvertTo-ConfigurationDataString($PSObject)
