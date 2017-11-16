@@ -16,7 +16,7 @@ function Get-DSCParamType
     
     $functions | ForEach-Object {
 
-        if ($_.Name -eq "Get-TargetResource") 
+        if ($_.Name -eq "Set-TargetResource") 
         {
             $functionAst = [System.Management.Automation.Language.Parser]::ParseInput($_.Body, [ref] $tokens, [ref] $errors)
 
@@ -163,6 +163,10 @@ function Get-DSCBlock
                 $value = $value.Substring(0,$value.Length -1)
             }
             $value += ")"
+        }
+        elseif($paramType -eq "CimInstance")
+        {
+            $value = $Params[$_]
         }
         else
         {
