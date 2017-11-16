@@ -46,6 +46,10 @@ function Get-DSCParamType
                         {
                             return "System.String[]"
                         }
+                        elseif($_.TypeName.FullName.ToLower() -eq "microsoft.management.infrastructure.ciminstance[]")
+                        {
+                            return "Microsoft.Management.Infrastructure.CimInstance[]"
+                        }
                     }
                 }
             }
@@ -151,16 +155,12 @@ function Get-DSCBlock
             }
             $value += ")"
         }
-        elseif($paramType -eq "Object[]")
+        elseif($paramType -eq "Object[]" -or $paramType -eq "Microsoft.Management.Infrastructure.CimInstance[]")
         {
             $array = $hash = $Params.Item($_)
             $value = "@("
             $array | ForEach-Object{
-                $value += $_ + ","
-            }
-            if($value.Length -gt 3)
-            {
-                $value = $value.Substring(0,$value.Length -1)
+                $value += $_
             }
             $value += ")"
         }
