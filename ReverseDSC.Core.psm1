@@ -13,10 +13,10 @@ function Get-DSCParamType
     $errors = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($ModulePath, [ref] $tokens, [ref] $errors)
     $functions = $ast.FindAll( {$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]}, $true)
-    
+
     $functions | ForEach-Object {
 
-        if ($_.Name -eq "Set-TargetResource") 
+        if ($_.Name -eq "Set-TargetResource")
         {
             $functionAst = [System.Management.Automation.Language.Parser]::ParseInput($_.Body, [ref] $tokens, [ref] $errors)
 
@@ -42,6 +42,10 @@ function Get-DSCParamType
                         {
                             return "System.Boolean"
                         }
+                        elseif($_.TypeName.FullName.ToLower() -eq "bool")
+                        {
+                            return "System.Boolean"
+                        }
                         elseif($_.TypeName.FullName.ToLower() -eq "string[]")
                         {
                             return "System.String[]"
@@ -63,17 +67,17 @@ function Get-DSCParamType
 function Get-DSCBlock
 {
     [CmdletBinding()]
-    param(        
+    param(
         [System.String] $ModulePath,
         [System.Collections.Hashtable] $Params,
         [switch] $UseGetTargetResource = $false
     )
 
     $dscBlock = ""
-    $Params.Keys | ForEach-Object { 
+    $Params.Keys | ForEach-Object {
         if($UseGetTargetResource)
         {
-            $paramType = Get-DSCParamType -ModulePath $ModulePath -ParamName "`$$_"            
+            $paramType = Get-DSCParamType -ModulePath $ModulePath -ParamName "`$$_"
         }
         else
         {
@@ -83,9 +87,9 @@ function Get-DSCBlock
             }
             else
             {
-                $paramType = Get-DSCParamType -ModulePath $ModulePath -ParamName "`$$_"   
+                $paramType = Get-DSCParamType -ModulePath $ModulePath -ParamName "`$$_"
             }
-        }        
+        }
 
         $value = $null
         if($paramType -eq "System.String" -or $paramType -eq "String")
@@ -140,7 +144,7 @@ function Get-DSCBlock
                     $value = $hash
                 }
             }
-            
+
         }
         elseif($paramType -eq "System.String[]" -or $paramType -eq "String[]")
         {
@@ -187,7 +191,7 @@ function Get-DSCBlock
         }
         $dscBlock += "            " + $_  + " = " + $value + ";`r`n"
     }
-    
+
     return $dscBlock
 }
 
@@ -200,19 +204,19 @@ function Get-DSCFakeParameters{
 
     $params = @{}
 
-    $tokens = $null 
+    $tokens = $null
     $errors = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($ModulePath, [ref] $tokens, [ref] $errors)
     $functions = $ast.FindAll( {$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]}, $true)
-    
+
     $functions | ForEach-Object {
 
-        if ($_.Name -eq "Get-TargetResource") 
+        if ($_.Name -eq "Get-TargetResource")
         {
             $functionAst = [System.Management.Automation.Language.Parser]::ParseInput($_.Body, [ref] $tokens, [ref] $errors)
 
             $parameters = $functionAst.FindAll( {$args[0] -is [System.Management.Automation.Language.ParameterAst]}, $true)
-            $parameters | ForEach-Object {   
+            $parameters | ForEach-Object {
                 $paramName = $_.Name.Extent.Text
                 $attributes = $_.Attributes
                 $found = $false
@@ -244,7 +248,7 @@ function Get-DSCFakeParameters{
                         }
                         elseif($_.TypeName.FullName -eq "System.Management.Automation.PSCredential")
                         {
-                            $params.Add($paramName.Replace("`$", ""), $null)                            
+                            $params.Add($paramName.Replace("`$", ""), $null)
                             $found = $true
                         }
                         elseif($_.TypeName.FullName -eq "System.Management.Automation.Boolean" -or $_.TypeName.FullName -eq "System.Boolean" -or $_.TypeName.FullName -eq "Boolean")
@@ -309,12 +313,12 @@ function Export-TargetResource()
         {
             $DSCBlockParams.Add($fakeParameter,$results.Get_Item($fakeParameter))
         }
-        else 
+        else
         {
             $DSCBlockParams.Add($fakeParameter,"")
         }
     }
-    
+
     $exportContent = "        " + $ResourceName + " " + [System.Guid]::NewGuid().ToString() + "`r`n"
     $exportContent += "        {`r`n"
     $exportContent += Get-DSCBlock -ModulePath $ModulePath -Params $DSCBlockParams
@@ -333,7 +337,7 @@ function Get-ResourceFriendlyName
         [parameter(Mandatory = $true)] [System.String] $ModulePath
     )
 
-    $tokens = $null 
+    $tokens = $null
     $errors = $null
     $schemaPath = $ModulePath.Replace(".psm1", ".schema.mof")
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($schemaPath, [ref] $tokens, [ref] $errors)
@@ -425,12 +429,12 @@ function Add-ConfigurationDataEntry($Node, $Key, $Value, $Description)
     if(!$Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
     {
         $Global:ConfigurationData[$Node].Entries.Add($Key, @{Value = $Value; Description = $Description})
-    }    
+    }
 }
 
 function Get-ConfigurationDataEntry($Node, $Key)
 {
-    <# If node is null, then search in all nodes and return first result found. #>    
+    <# If node is null, then search in all nodes and return first result found. #>
     if($null -eq $Node)
     {
         foreach($Node in $Global:ConfigurationData.Keys)
@@ -462,7 +466,7 @@ function Get-ConfigurationDataContent
         $psd1Content += "            PSDscAllowDomainUser = `$true;`r`n"
         $psd1Content += "            # CertificateFile = `"\\<location>\<file>.cer`";`r`n"
         $psd1Content += "            # Thumbprint = `xxxxxxxxxxxxxxxxxxxxxxx`r`n"
-        $psd1Content += "            #region Parameters`r`n"       
+        $psd1Content += "            #region Parameters`r`n"
         $keyValuePair = $Global:ConfigurationData[$node].Entries
         foreach($key in $keyValuePair.Keys)
         {
@@ -475,21 +479,21 @@ function Get-ConfigurationDataContent
                 $psd1Content += "            " + $key + " = " + $keyValuePair[$key].Value + "`r`n`r`n"
             }
             elseif($keyValuePair[$key].Value.GetType().FullName -eq "System.Object[]")
-            {            
+            {
                 $psd1Content += "            " + $key + " = " + (ConvertTo-ConfigurationDataString $keyValuePair[$key].Value)
             }
-            else {                
+            else {
                 $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key].Value + "`"`r`n`r`n"
             }
         }
 
-        $psd1Content += "        },`r`n" 
+        $psd1Content += "        },`r`n"
     }
     if($psd1Content.EndsWith(",`r`n"))
     {
         $psd1Content = $psd1Content.Remove($psd1Content.Length-3, 1)
     }
-    $psd1Content += "    )`r`n" 
+    $psd1Content += "    )`r`n"
     $psd1Content += "    NonNodeData = @(`r`n"
     foreach($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -eq "nonnodedata"})
     {
@@ -505,23 +509,23 @@ function Get-ConfigurationDataContent
             {
                 $psd1Content += "            " + $key + " = " + $keyValuePair[$key].Value + "`r`n`r`n"
             }
-            else {                
+            else {
                 $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key].Value + "`"`r`n`r`n"
             }
         }
-        $psd1Content += "        }`r`n" 
+        $psd1Content += "        }`r`n"
     }
     if($psd1Content.EndsWith(",`r`n"))
     {
         $psd1Content = $psd1Content.Remove($psd1Content.Length-3, 1)
     }
-    $psd1Content += "    )`r`n"    
+    $psd1Content += "    )`r`n"
     $psd1Content += "}"
     return $psd1Content
 }
 
 function New-ConfigurationDataDocument($Path)
-{   
+{
     Get-ConfigurationDataContent | Out-File -FilePath $Path
 }
 
@@ -553,7 +557,7 @@ function ConvertTo-ConfigurationDataString($PSObject)
         {
             $configDataContent += "            @{`r`n"
             foreach($key in $PSObject.Keys)
-            {                
+            {
                 $configDataContent += "                " + $key + " = "
                 $configDataContent += ConvertTo-ConfigurationDataString $PSObject[$key]
             }
