@@ -501,16 +501,22 @@ function Get-ConfigurationDataContent
         $keyValuePair = $Global:ConfigurationData[$node].Entries
         foreach($key in $keyValuePair.Keys)
         {
-            if($null -ne $keyValuePair[$key].Description)
+            try
             {
-                $psd1Content += "            # " + $keyValuePair[$key].Description +  "`r`n"
+                if($null -ne $keyValuePair[$key].Description)
+                {
+                    $psd1Content += "            # " + $keyValuePair[$key].Description +  "`r`n"
+                }
+                if($keyValuePair[$key].Value.ToString().StartsWith("@(") -or $keyValuePair[$key].Value.ToString().StartsWith("`$"))
+                {
+                    $psd1Content += "            " + $key + " = " + $keyValuePair[$key].Value + "`r`n`r`n"
+                }
+                else {
+                    $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key].Value + "`"`r`n`r`n"
+                }
             }
-            if($keyValuePair[$key].Value.ToString().StartsWith("@(") -or $keyValuePair[$key].Value.ToString().StartsWith("`$"))
-            {
-                $psd1Content += "            " + $key + " = " + $keyValuePair[$key].Value + "`r`n`r`n"
-            }
-            else {
-                $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key].Value + "`"`r`n`r`n"
+            catch {
+                Write-Host "Warning: Could not obtain value for key $key" -ForegroundColor Yellow
             }
         }
         $psd1Content += "        }`r`n"
