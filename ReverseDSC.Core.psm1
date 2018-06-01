@@ -509,9 +509,9 @@ function Get-ConfigurationDataContent
                 $newValue = "@("
                 foreach($item in $value)
                 {
-                    $newValue += "`"" + $item + "`",`""
+                    $newValue += "`"" + $item + "`","
                 }
-                $newValue = $newValue.Substring(0,$newValue.Length -2)
+                $newValue = $newValue.Substring(0,$newValue.Length -1)
                 $newValue += ")"
                 $value = $newValue
             }
