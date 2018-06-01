@@ -147,17 +147,31 @@ function Get-DSCBlock
 
         }
         elseif($paramType -eq "System.String[]" -or $paramType -eq "String[]")
-        {
-            $value = "@("
+        {            
             $hash = $Params.Item($_)
-            $hash| ForEach-Object {
-                $value += "`"" + $_ + "`","
-            }
-            if($value.Length -gt 2)
+            if($hash -and !$hash.ToString().StartsWith("`$ConfigurationData."))
             {
-                $value = $value.Substring(0,$value.Length -1)
+                $value = "@("
+                $hash| ForEach-Object {
+                    $value += "`"" + $_ + "`","
+                }
+                if($value.Length -gt 2)
+                {
+                    $value = $value.Substring(0,$value.Length -1)
+                }
+                $value += ")"
             }
-            $value += ")"
+            else
+            {
+                if($hash)
+                {
+                    $value = $hash
+                }
+                else
+                {
+                    $value = "@()"
+                }
+            }
         }
         elseif($paramType -eq "Object[]" -or $paramType -eq "Microsoft.Management.Infrastructure.CimInstance[]")
         {
