@@ -501,6 +501,21 @@ function Get-ConfigurationDataContent
         $keyValuePair = $Global:ConfigurationData[$node].Entries
         foreach($key in $keyValuePair.Keys)
         {
+            $value = $keyValuePair[$key].Value
+            $valType = $value.GetType().FullName
+
+            if($valType -eq "System.Object[]")
+            {
+                $newValue = "@("
+                foreach($item in $value)
+                {
+                    $newValue += "`"" + $item + "`",`""
+                }
+                $newValue = $newValue.Substring(0,$newValue.Length -2)
+                $newValue += ")"
+                $value = $newValue
+            }
+
             try
             {
                 if($null -ne $keyValuePair[$key].Description)
@@ -509,10 +524,10 @@ function Get-ConfigurationDataContent
                 }
                 if($keyValuePair[$key].Value.ToString().StartsWith("@(") -or $keyValuePair[$key].Value.ToString().StartsWith("`$"))
                 {
-                    $psd1Content += "            " + $key + " = " + $keyValuePair[$key].Value + "`r`n`r`n"
+                    $psd1Content += "            " + $key + " = " + $value + "`r`n`r`n"
                 }
                 else {
-                    $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key].Value + "`"`r`n`r`n"
+                    $psd1Content += "            " + $key + " = `"" + $value + "`"`r`n`r`n"
                 }
             }
             catch {
