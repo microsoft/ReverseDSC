@@ -522,7 +522,7 @@ function Get-ConfigurationDataContent
                 {
                     $psd1Content += "            # " + $keyValuePair[$key].Description +  "`r`n"
                 }
-                if($keyValuePair[$key].Value.ToString().StartsWith("@(") -or $keyValuePair[$key].Value.ToString().StartsWith("`$"))
+                if($value.StartsWith("@(") -or $value.StartsWith("`$"))
                 {
                     $psd1Content += "            " + $key + " = " + $value + "`r`n`r`n"
                 }
