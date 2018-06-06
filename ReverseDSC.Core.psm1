@@ -515,23 +515,23 @@ function Get-ConfigurationDataContent
         $keyValuePair = $Global:ConfigurationData[$node].Entries
         foreach($key in $keyValuePair.Keys)
         {
-            $value = $keyValuePair[$key].Value
-            $valType = $value.GetType().FullName
-
-            if($valType -eq "System.Object[]")
-            {
-                $newValue = "@("
-                foreach($item in $value)
-                {
-                    $newValue += "`"" + $item + "`","
-                }
-                $newValue = $newValue.Substring(0,$newValue.Length -1)
-                $newValue += ")"
-                $value = $newValue
-            }
-
             try
             {
+                $value = $keyValuePair[$key].Value
+                $valType = $value.GetType().FullName
+
+                if($valType -eq "System.Object[]")
+                {
+                    $newValue = "@("
+                    foreach($item in $value)
+                    {
+                        $newValue += "`"" + $item + "`","
+                    }
+                    $newValue = $newValue.Substring(0,$newValue.Length -1)
+                    $newValue += ")"
+                    $value = $newValue
+                }
+            
                 if($null -ne $keyValuePair[$key].Description)
                 {
                     $psd1Content += "            # " + $keyValuePair[$key].Description +  "`r`n"
