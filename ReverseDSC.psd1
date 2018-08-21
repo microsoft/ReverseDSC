@@ -6,7 +6,7 @@
 # Generated on: 01/06/2018
 #
 @{
-    ModuleVersion = '1.9.2.7'
+    ModuleVersion = '1.9.2.8'
     GUID = '6c1176a0-4fac-4134-8ca2-3fa8a21a7b90'
     Author = 'Microsoft Corporation'
     CompanyName = 'Microsoft Corporation'
@@ -44,7 +44,7 @@
             ProjectUri = 'https://Github.com/Microsoft/ReverseDSC'
 
             # A URL to an icon representing this module.
-            # IconUri = 'https://github.com/Microsoft/ReverseDSC/blob/master/Images/DSCModuleIcon.png?raw=true'
+            IconUri = 'https://github.com/Microsoft/ReverseDSC/blob/master/Images/DSCModuleIcon.png?raw=true'
 
         } # End of PSData hashtable
 
