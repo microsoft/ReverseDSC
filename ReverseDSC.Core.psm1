@@ -180,7 +180,7 @@ function Get-DSCBlock
             {
                 $value = "@("
                 $hash| ForEach-Object {
-                    $value += $_ + ","
+                    $value += $_.ToString() + ","
                 }
                 if($value.Length -gt 2)
                 {
