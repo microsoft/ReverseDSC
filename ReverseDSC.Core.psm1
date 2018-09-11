@@ -173,6 +173,33 @@ function Get-DSCBlock
                 }
             }
         }
+        elseif($paramType -eq "System.UInt32[]")
+        {
+            $hash = $Params.Item($_)
+            if($hash)
+            {
+                $value = "@("
+                $hash| ForEach-Object {
+                    $value += $_ + ","
+                }
+                if($value.Length -gt 2)
+                {
+                    $value = $value.Substring(0,$value.Length -1)
+                }
+                $value += ")"
+            }
+            else
+            {
+                if($hash)
+                {
+                    $value = $hash
+                }
+                else
+                {
+                    $value = "@()"
+                }
+            }
+        }
         elseif($paramType -eq "Object[]" -or $paramType -eq "Microsoft.Management.Infrastructure.CimInstance[]")
         {
             $array = $hash = $Params.Item($_)
