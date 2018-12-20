@@ -146,7 +146,7 @@ function Get-DSCBlock
             }
 
         }
-        elseif($paramType -eq "System.String[]" -or $paramType -eq "String[]")
+        elseif($paramType -eq "System.String[]" -or $paramType -eq "String[]" -or $paramType -eq "ArrayList")
         {            
             $hash = $Params.Item($_)
             if($hash -and !$hash.ToString().StartsWith("`$ConfigurationData."))
@@ -432,26 +432,26 @@ function Test-Credentials([string] $UserName)
 
 function Convert-DSCStringParamToVariable([string]$DSCBlock, [string]$ParameterName)
 {
-    $startPosition = $DSCBlock.IndexOf($ParameterName);
+    $startPosition = $DSCBlock.IndexOf($ParameterName)
+    $enfOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
+
     $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
 
-    if($startPosition -lt 0)
+    if ($enfOfLinePosition -gt $startPosition)
     {
-        $startPosition = $DSCBlock.IndexOf("'", $startPosition)
-    }
-
-    if($startPosition -ge 0)
-    {
-        $endPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
-        if($endPosition -lt 0)
+        if ($startPosition -ge 0)
         {
-            $endPosition = $DSCBlock.IndexOf("'", $startPosition + 1)
-        }
+            $endPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
+            if ($endPosition -lt 0)
+            {
+                $endPosition = $DSCBlock.IndexOf("'", $startPosition + 1)
+            }
 
-        if($endPosition -ge 0)
-        {
-            $DSCBlock = $DSCBlock.Remove($startPosition, 1)
-            $DSCBlock = $DSCBlock.Remove($endPosition-1, 1)
+            if ($endPosition -ge 0)
+            {
+                $DSCBlock = $DSCBlock.Remove($startPosition, 1)
+                $DSCBlock = $DSCBlock.Remove($endPosition-1, 1)
+            }
         }
     }
     return $DSCBlock
