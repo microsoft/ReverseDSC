@@ -348,7 +348,7 @@ function Export-TargetResource()
     $results = Get-TargetResource @finalParams
 
     $DSCBlockParams = @{}
-    foreach($fakeParameter in $fakeParameters.Keys)
+    foreach($fakeParameter in $results.Keys)
     {
         if($results[$fakeParameter])
         {
