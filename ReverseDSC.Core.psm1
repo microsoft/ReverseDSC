@@ -70,10 +70,24 @@ function Get-DSCBlock
     param(
         [System.String] $ModulePath,
         [System.Collections.Hashtable] $Params,
-        [switch] $UseGetTargetResource = $false
+        [switch] $UseGetTargetResource = $false,
+        [int] $Indent = 1,
+        [switch] $AsFullConfigurationBlock,
+        [string] $FriendlyBlockName,
+        [string[]] $DependsOnClause
     )
-
     $dscBlock = ""
+    if ($AsFullConfigurationBlock)
+    {
+        $DSCResource = Get-ResourceFriendlyName -ModulePath $ModulePath
+        if (-not ($FriendlyBlockName))
+        {
+            $FriendlyBlockName = [Guid]::NewGuid().ToString()
+        }
+        $dscBlock += "`t" * $Indent + $DSCResource + " " + "`"$FriendlyBlockName`"`r`n"
+        
+        $dscBlock += "`t" * $Indent + "{`r`n"
+    }
     $Params.Keys | ForEach-Object {
         if($UseGetTargetResource)
         {
@@ -230,9 +244,18 @@ function Get-DSCBlock
                 }
             }
         }
-        $dscBlock += "            " + $_  + " = " + $value + ";`r`n"
-    }
 
+        $dscBlock += "`t" * ($Indent + 1) + $_  + " = " + $value + ";`r`n"
+    }
+    if ($DependsOnClause)
+    {
+        $DependsOn = Get-DSCDependsOnBlock -dependsOnItems $DependsOnClause
+        $dscBlock += "`t" * ($Indent + 1) + $_  + "DependsOn = " + $DependsOn + ";`r`n" 
+    }
+    if ($AsFullConfigurationBlock)
+    {
+        $dscBlock +="`t" * $Indent + "}`r`n"
+    }
     return $dscBlock
 }
 
