@@ -250,7 +250,7 @@ function Get-DSCBlock
     if ($DependsOnClause)
     {
         $DependsOn = Get-DSCDependsOnBlock -dependsOnItems $DependsOnClause
-        $dscBlock += "`t" * ($Indent + 1) + $_  + "DependsOn = " + $DependsOn + ";`r`n" 
+        $dscBlock += "`t" * ($Indent + 1) + "DependsOn = " + $DependsOn + ";`r`n" 
     }
     if ($AsFullConfigurationBlock)
     {
