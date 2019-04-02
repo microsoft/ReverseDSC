@@ -146,7 +146,7 @@ function Get-DSCBlock
             }
 
         }
-        elseif($paramType -eq "System.String[]" -or $paramType -eq "String[]" -or $paramType -eq "ArrayList")
+        elseif($paramType -eq "System.String[]" -or $paramType -eq "String[]" -or $paramType -eq "ArrayList" -or $paramType -eq "List``1")
         {            
             $hash = $Params.Item($_)
             if($hash -and !$hash.ToString().StartsWith("`$ConfigurationData."))
