@@ -14,43 +14,42 @@ function Get-DSCParamType
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($ModulePath, [ref] $tokens, [ref] $errors)
     $functions = $ast.FindAll( {$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]}, $true)
 
-    $functions | ForEach-Object {
-
+    $functions | ForEach-Object{
         if ($_.Name -eq "Set-TargetResource")
         {
             $functionAst = [System.Management.Automation.Language.Parser]::ParseInput($_.Body, [ref] $tokens, [ref] $errors)
 
             $parameters = $functionAst.FindAll( {$args[0] -is [System.Management.Automation.Language.ParameterAst]}, $true)
-            $parameters | ForEach-Object {
-                if($_.Name.Extent.Text -eq $ParamName)
+            $parameters | ForEach-Object{
+                if ($_.Name.Extent.Text -eq $ParamName)
                 {
                     $attributes = $_.Attributes
                     $attributes | ForEach-Object{
-                        if($_.TypeName.FullName -like "System.*")
+                        if ($_.TypeName.FullName -like "System.*")
                         {
                             return $_.TypeName.FullName
                         }
-                        elseif($_.TypeName.FullName.ToLower() -eq "microsoft.management.infrastructure.ciminstance")
+                        elseif ($_.TypeName.FullName.ToLower() -eq "microsoft.management.infrastructure.ciminstance")
                         {
                             return "System.Collections.Hashtable"
                         }
-                        elseif($_.TypeName.FullName.ToLower() -eq "string")
+                        elseif ($_.TypeName.FullName.ToLower() -eq "string")
                         {
                             return "System.String"
                         }
-                        elseif($_.TypeName.FullName.ToLower() -eq "boolean")
+                        elseif ($_.TypeName.FullName.ToLower() -eq "boolean")
                         {
                             return "System.Boolean"
                         }
-                        elseif($_.TypeName.FullName.ToLower() -eq "bool")
+                        elseif ($_.TypeName.FullName.ToLower() -eq "bool")
                         {
                             return "System.Boolean"
                         }
-                        elseif($_.TypeName.FullName.ToLower() -eq "string[]")
+                        elseif ($_.TypeName.FullName.ToLower() -eq "string[]")
                         {
                             return "System.String[]"
                         }
-                        elseif($_.TypeName.FullName.ToLower() -eq "microsoft.management.infrastructure.ciminstance[]")
+                        elseif ($_.TypeName.FullName.ToLower() -eq "microsoft.management.infrastructure.ciminstance[]")
                         {
                             return "Microsoft.Management.Infrastructure.CimInstance[]"
                         }
@@ -76,6 +75,22 @@ function Get-DSCBlock
         [string] $FriendlyBlockName,
         [string[]] $DependsOnClause
     )
+    # Figure out what parameter has the longuest name, and get its Length;
+    $maxParamNameLength = 0
+    foreach ($param in $Params.Keys)
+    {
+        if ($param.Length -gt $maxParamNameLength)
+        {
+            $maxParamNameLength = $param.Length
+        }
+    }
+
+    # PSDscRunAsCredential is 20 characters and in most case the longuest.
+    if ($maxParamNameLength -lt 20)
+    {
+        $maxParamNameLength = 20
+    }
+
     $dscBlock = ""
     if ($AsFullConfigurationBlock)
     {
@@ -89,13 +104,13 @@ function Get-DSCBlock
         $dscBlock += "`t" * $Indent + "{`r`n"
     }
     $Params.Keys | ForEach-Object {
-        if($UseGetTargetResource)
+        if ($UseGetTargetResource)
         {
             $paramType = Get-DSCParamType -ModulePath $ModulePath -ParamName "`$$_"
         }
         else
         {
-            if($null -ne $Params[$_])
+            if ($null -ne $Params[$_])
             {
                 $paramType = $Params[$_].GetType().Name
             }
@@ -106,9 +121,9 @@ function Get-DSCBlock
         }
 
         $value = $null
-        if($paramType -eq "System.String" -or $paramType -eq "String")
+        if ($paramType -eq "System.String" -or $paramType -eq "String")
         {
-            if(!$null -eq $Params.Item($_))
+            if (!$null -eq $Params.Item($_))
             {
                 $value = "`"" + $Params.Item($_).ToString().Replace("`"", "```"") + "`""
             }
@@ -117,23 +132,26 @@ function Get-DSCBlock
                 $value = "`"" + $Params.Item($_) + "`""
             }
         }
-        elseif($paramType -eq "System.Boolean" -or $paramType -eq "Boolean")
+        elseif ($paramType -eq "System.Boolean" -or $paramType -eq "Boolean")
         {
             $value = "`$" + $Params.Item($_)
         }
-        elseif($paramType -eq "System.Management.Automation.PSCredential")
+        elseif ($paramType -eq "System.Management.Automation.PSCredential")
         {
-            if($null -ne $Params.Item($_)){
-                if($Params.Item($_).ToString() -like "`$Creds*")
+            if ($null -ne $Params.Item($_))
+            {
+                if ($Params.Item($_).ToString() -like "`$Creds*")
                 {
                     $value = $Params.Item($_).Replace("-", "_").Replace(".", "_")
                 }
-                else {
-                    if($null -eq $Params.Item($_).UserName)
+                else
+                {
+                    if ($null -eq $Params.Item($_).UserName)
                     {
                         $value = "`$Creds" + ($Params.Item($_).Split('\'))[1].Replace("-", "_").Replace(".", "_")
                     }
-                    else{
+                    else
+                    {
                         $value = "`$Creds" + ($Params.Item($_).UserName.Split('\'))[1].Replace("-", "_").Replace(".", "_")
                     }
                 }
@@ -143,7 +161,7 @@ function Get-DSCBlock
                 $value = "Get-Credential -Message " + $_
             }
         }
-        elseif($paramType -eq "System.Collections.Hashtable")
+        elseif ($paramType -eq "System.Collections.Hashtable")
         {
             $value = "@{"
             $hash = $Params.Item($_)
@@ -158,12 +176,11 @@ function Get-DSCBlock
                     $value = $hash
                 }
             }
-
         }
-        elseif($paramType -eq "System.String[]" -or $paramType -eq "String[]" -or $paramType -eq "ArrayList")
-        {            
+        elseif ($paramType -eq "System.String[]" -or $paramType -eq "String[]" -or $paramType -eq "ArrayList" -or $paramType -eq "List``1")
+        {
             $hash = $Params.Item($_)
-            if($hash -and !$hash.ToString().StartsWith("`$ConfigurationData."))
+            if ($hash -and !$hash.ToString().StartsWith("`$ConfigurationData."))
             {
                 $value = "@("
                 $hash| ForEach-Object {
@@ -177,7 +194,7 @@ function Get-DSCBlock
             }
             else
             {
-                if($hash)
+                if ($hash)
                 {
                     $value = $hash
                 }
@@ -187,10 +204,10 @@ function Get-DSCBlock
                 }
             }
         }
-        elseif($paramType -eq "System.UInt32[]")
+        elseif ($paramType -eq "System.UInt32[]")
         {
             $hash = $Params.Item($_)
-            if($hash)
+            if ($hash)
             {
                 $value = "@("
                 $hash| ForEach-Object {
@@ -204,7 +221,7 @@ function Get-DSCBlock
             }
             else
             {
-                if($hash)
+                if ($hash)
                 {
                     $value = $hash
                 }
@@ -214,7 +231,7 @@ function Get-DSCBlock
                 }
             }
         }
-        elseif($paramType -eq "Object[]" -or $paramType -eq "Microsoft.Management.Infrastructure.CimInstance[]")
+        elseif ($paramType -eq "Object[]" -or $paramType -eq "Microsoft.Management.Infrastructure.CimInstance[]")
         {
             $array = $hash = $Params.Item($_)
             $value = "@("
@@ -223,17 +240,18 @@ function Get-DSCBlock
             }
             $value += ")"
         }
-        elseif($paramType -eq "CimInstance")
+        elseif ($paramType -eq "CimInstance")
         {
             $value = $Params[$_]
         }
         else
         {
-            if($null -eq $Params[$_])
+            if ($null -eq $Params[$_])
             {
                 $value = "`$null"
             }
-            else {
+            else
+            {
                 if($Params[$_].GetType().BaseType.Name -eq "Enum")
                 {
                     $value = "`"" + $Params.Item($_) + "`""
@@ -244,6 +262,17 @@ function Get-DSCBlock
                 }
             }
         }
+
+        # Determine the number of additional spaces we need to add before the '=' to make sure the values are all aligned. This number
+        # is obtained by substracting the length of the current parameter's name to the maximum length found.
+        $numberOfAdditionalSpaces = $maxParamNameLength - $_.Length
+        $additionalSpaces = ""
+        for ($i = 0; $i -lt $numberOfAdditionalSpaces; $i++)
+        {
+            $additionalSpaces += " "
+        }
+        $dscBlock += "            " + $_  + $additionalSpaces + " = " + $value + ";`r`n"
+    }
 
         $dscBlock += "`t" * ($Indent + 1) + $_  + " = " + $value + ";`r`n"
     }
@@ -273,21 +302,21 @@ function Get-DSCFakeParameters{
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($ModulePath, [ref] $tokens, [ref] $errors)
     $functions = $ast.FindAll( {$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]}, $true)
 
-    $functions | ForEach-Object {
+    $functions | ForEach-Object{
 
         if ($_.Name -eq "Get-TargetResource")
         {
             $functionAst = [System.Management.Automation.Language.Parser]::ParseInput($_.Body, [ref] $tokens, [ref] $errors)
 
             $parameters = $functionAst.FindAll( {$args[0] -is [System.Management.Automation.Language.ParameterAst]}, $true)
-            $parameters | ForEach-Object {
+            $parameters | ForEach-Object{
                 $paramName = $_.Name.Extent.Text
                 $attributes = $_.Attributes
                 $found = $false
 
                 <# Loop once to figure out if there is a validate Set to use. #>
                 $attributes | ForEach-Object{
-                    if($_.TypeName.FullName -eq "ValidateSet")
+                    if ($_.TypeName.FullName -eq "ValidateSet")
                     {
                         $params.Add($paramName.Replace("`$", ""), $_.PositionalArguments[0].ToString().Replace("`"", "").Replace("'",""))
                         $found = $true
@@ -298,29 +327,29 @@ function Get-DSCFakeParameters{
                     }
                 }
                 $attributes | ForEach-Object{
-                    if(!$found)
+                    if (!$found)
                     {
-                        if($_.TypeName.FullName -eq "System.String" -or $_.TypeName.FullName -eq "String")
+                        if ($_.TypeName.FullName -eq "System.String" -or $_.TypeName.FullName -eq "String")
                         {
                             $params.Add($paramName.Replace("`$", ""), "*")
                             $found = $true
                         }
-                        elseif($_.TypeName.FullName -eq "System.UInt32" -or $_.TypeName.FullName -eq "Int32")
+                        elseif ($_.TypeName.FullName -eq "System.UInt32" -or $_.TypeName.FullName -eq "Int32")
                         {
                             $params.Add($paramName.Replace("`$", ""), 0)
                             $found = $true
                         }
-                        elseif($_.TypeName.FullName -eq "System.Management.Automation.PSCredential")
+                        elseif ($_.TypeName.FullName -eq "System.Management.Automation.PSCredential")
                         {
                             $params.Add($paramName.Replace("`$", ""), $null)
                             $found = $true
                         }
-                        elseif($_.TypeName.FullName -eq "System.Management.Automation.Boolean" -or $_.TypeName.FullName -eq "System.Boolean" -or $_.TypeName.FullName -eq "Boolean")
+                        elseif ($_.TypeName.FullName -eq "System.Management.Automation.Boolean" -or $_.TypeName.FullName -eq "System.Boolean" -or $_.TypeName.FullName -eq "Boolean")
                         {
                             $params.Add($paramName.Replace("`$", ""), $true)
                             $found = $true
                         }
-                        elseif($_.TypeName.FullName -eq "System.String[]" -or $_.TypeName.FullName -eq "String[]")
+                        elseif ($_.TypeName.FullName -eq "System.String[]" -or $_.TypeName.FullName -eq "String[]")
                         {
                             $params.Add($paramName.Replace("`$", ""),[string]@("1","2"))
                             $found = $true
@@ -336,7 +365,7 @@ function Get-DSCFakeParameters{
 function Get-DSCDependsOnBlock($dependsOnItems)
 {
     $dependsOnClause = "@("
-    foreach($clause in $dependsOnItems)
+    foreach ($clause in $dependsOnItems)
     {
         $dependsOnClause += "`"" + $clause + "`","
     }
@@ -359,9 +388,9 @@ function Export-TargetResource()
 
     <# Nik20170109 - Replace each Fake Parameter by the ones received as function arguments #>
     $finalParams = @{}
-    foreach($fakeParameter in $fakeParameters.Keys)
+    foreach ($fakeParameter in $fakeParameters.Keys)
     {
-        if($MandatoryParameters.ContainsKey($fakeParameter))
+        if ($MandatoryParameters.ContainsKey($fakeParameter))
         {
             $finalParams.Add($fakeParameter,$MandatoryParameters.Get_Item($fakeParameter))
         }
@@ -371,9 +400,9 @@ function Export-TargetResource()
     $results = Get-TargetResource @finalParams
 
     $DSCBlockParams = @{}
-    foreach($fakeParameter in $results.Keys)
+    foreach ($fakeParameter in $fakeParameters.Keys)
     {
-        if($results[$fakeParameter])
+        if ($results[$fakeParameter])
         {
             $DSCBlockParams.Add($fakeParameter,$results.Get_Item($fakeParameter))
         }
@@ -386,7 +415,7 @@ function Export-TargetResource()
     $exportContent = "        " + $ResourceName + " " + [System.Guid]::NewGuid().ToString() + "`r`n"
     $exportContent += "        {`r`n"
     $exportContent += Get-DSCBlock -ModulePath $ModulePath -Params $DSCBlockParams
-    if($null -ne $DependsOnClause)
+    if ($null -ne $DependsOnClause)
     {
         $exportContent += $DependsOnClause
     }
@@ -406,9 +435,9 @@ function Get-ResourceFriendlyName
     $schemaPath = $ModulePath.Replace(".psm1", ".schema.mof")
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($schemaPath, [ref] $tokens, [ref] $errors)
 
-    for($i = 0; $i -lt $tokens.Length; $i++)
+    for ($i = 0; $i -lt $tokens.Length; $i++)
     {
-        if($tokens[$i].Text.ToLower() -eq "friendlyname" -and ($i+2) -le $tokens.Length)
+        if ($tokens[$i].Text.ToLower() -eq "friendlyname" -and ($i+2) -le $tokens.Length)
         {
             return $tokens[$i+2].Text.Replace("`"", "")
         }
@@ -419,7 +448,7 @@ function Get-ResourceFriendlyName
 <# Region Helper Methods #>
 function Get-Credentials([string] $UserName)
 {
-    if($Global:CredsRepo.Contains($UserName.ToLower()))
+    if ($Global:CredsRepo.Contains($UserName.ToLower()))
     {
         return $UserName.ToLower()
     }
@@ -429,7 +458,7 @@ function Get-Credentials([string] $UserName)
 function Resolve-Credentials([string] $UserName)
 {
     $userNameParts = $UserName.ToLower().Split('\')
-    if($userNameParts.Length -gt 1)
+    if ($userNameParts.Length -gt 1)
     {
         return "`$Creds" + $userNameParts[1].Replace("-","_").Replace(".", "_").Replace(" ", "").Replace("@","")
     }
@@ -438,7 +467,7 @@ function Resolve-Credentials([string] $UserName)
 
 function Save-Credentials([string] $UserName)
 {
-    if(!$Global:CredsRepo.Contains($UserName.ToLower()))
+    if (!$Global:CredsRepo.Contains($UserName.ToLower()))
     {
         $Global:CredsRepo += $UserName.ToLower()
     }
@@ -446,7 +475,7 @@ function Save-Credentials([string] $UserName)
 
 function Test-Credentials([string] $UserName)
 {
-    if($Global:CredsRepo.Contains($UserName.ToLower()))
+    if ($Global:CredsRepo.Contains($UserName.ToLower()))
     {
         return $true
     }
@@ -485,12 +514,12 @@ $Global:ConfigurationData = @{}
 
 function Add-ConfigurationDataEntry($Node, $Key, $Value, $Description)
 {
-    if($null -eq $Global:ConfigurationData[$Node])
+    if ($null -eq $Global:ConfigurationData[$Node])
     {
         $Global:ConfigurationData.Add($Node, @{})
         $Global:ConfigurationData[$Node].Add("Entries", @{})
     }
-    if(!$Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
+    if (!$Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
     {
         $Global:ConfigurationData[$Node].Entries.Add($Key, @{Value = $Value; Description = $Description})
     }
@@ -499,11 +528,11 @@ function Add-ConfigurationDataEntry($Node, $Key, $Value, $Description)
 function Get-ConfigurationDataEntry($Node, $Key)
 {
     <# If node is null, then search in all nodes and return first result found. #>
-    if($null -eq $Node)
+    if ($null -eq $Node)
     {
-        foreach($Node in $Global:ConfigurationData.Keys)
+        foreach ($Node in $Global:ConfigurationData.Keys)
         {
-            if($Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
+            if ($Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
             {
                 return $Global:ConfigurationData[$Node].Entries[$Key]
             }
@@ -511,7 +540,7 @@ function Get-ConfigurationDataEntry($Node, $Key)
     }
     else
     {
-        if($Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
+        if ($Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
         {
             return $Global:ConfigurationData[$Node].Entries[$Key]
         }
@@ -522,58 +551,61 @@ function Get-ConfigurationDataContent
 {
     $psd1Content = "@{`r`n"
     $psd1Content += "    AllNodes = @(`r`n"
-    foreach($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -ne "nonnodedata"})
+    foreach ($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -ne "nonnodedata"})
     {
         $psd1Content += "        @{`r`n"
-        $psd1Content += "            NodeName = `"" + $node + "`"`r`n"
+        $psd1Content += "            NodeName                    = `"" + $node + "`"`r`n"
         $psd1Content += "            PSDscAllowPlainTextPassword = `$true;`r`n"
-        $psd1Content += "            PSDscAllowDomainUser = `$true;`r`n"
-        $psd1Content += "            # CertificateFile = `"\\<location>\<file>.cer`";`r`n"
-        $psd1Content += "            # Thumbprint = `xxxxxxxxxxxxxxxxxxxxxxx`r`n"
+        $psd1Content += "            PSDscAllowDomainUser        = `$true;`r`n"
+        $psd1Content += "            # CertificateFile           = `"\\<location>\<file>.cer`";`r`n"
+        $psd1Content += "            # Thumbprint                = `xxxxxxxxxxxxxxxxxxxxxxx`r`n`r`n"
         $psd1Content += "            #region Parameters`r`n"
         $keyValuePair = $Global:ConfigurationData[$node].Entries
-        foreach($key in $keyValuePair.Keys)
+        foreach ($key in $keyValuePair.Keys)
         {
-            if($null -ne $keyValuePair[$key].Description)
+            if ($null -ne $keyValuePair[$key].Description)
             {
                 $psd1Content += "            # " + $keyValuePair[$key].Description +  "`r`n"
             }
-            if($keyValuePair[$key].Value.ToString().StartsWith("@(") -or $keyValuePair[$key].Value.ToString().StartsWith("`$"))
+            if ($keyValuePair[$key].Value.ToString().StartsWith("@(") -or $keyValuePair[$key].Value.ToString().StartsWith("`$"))
             {
                 $psd1Content += "            " + $key + " = " + $keyValuePair[$key].Value + "`r`n`r`n"
             }
-            elseif($keyValuePair[$key].Value.GetType().FullName -eq "System.Object[]")
+            elseif ($keyValuePair[$key].Value.GetType().FullName -eq "System.Object[]")
             {
                 $psd1Content += "            " + $key + " = " + (ConvertTo-ConfigurationDataString $keyValuePair[$key].Value)
             }
-            else {
+            else
+            {
                 $psd1Content += "            " + $key + " = `"" + $keyValuePair[$key].Value + "`"`r`n`r`n"
             }
         }
 
         $psd1Content += "        },`r`n"
     }
-    if($psd1Content.EndsWith(",`r`n"))
+
+    if ($psd1Content.EndsWith(",`r`n"))
     {
         $psd1Content = $psd1Content.Remove($psd1Content.Length-3, 1)
     }
+
     $psd1Content += "    )`r`n"
     $psd1Content += "    NonNodeData = @(`r`n"
-    foreach($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -eq "nonnodedata"})
+    foreach ($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -eq "nonnodedata"})
     {
         $psd1Content += "        @{`r`n"
         $keyValuePair = $Global:ConfigurationData[$node].Entries
-        foreach($key in $keyValuePair.Keys)
+        foreach ($key in $keyValuePair.Keys)
         {
             try
             {
                 $value = $keyValuePair[$key].Value
                 $valType = $value.GetType().FullName
 
-                if($valType -eq "System.Object[]")
+                if ($valType -eq "System.Object[]")
                 {
                     $newValue = "@("
-                    foreach($item in $value)
+                    foreach ($item in $value)
                     {
                         $newValue += "`"" + $item + "`","
                     }
@@ -582,15 +614,16 @@ function Get-ConfigurationDataContent
                     $value = $newValue
                 }
             
-                if($null -ne $keyValuePair[$key].Description)
+                if ($null -ne $keyValuePair[$key].Description)
                 {
                     $psd1Content += "            # " + $keyValuePair[$key].Description +  "`r`n"
                 }
-                if($value.StartsWith("@(") -or $value.StartsWith("`$"))
+                if ($value.StartsWith("@(") -or $value.StartsWith("`$"))
                 {
                     $psd1Content += "            " + $key + " = " + $value + "`r`n`r`n"
                 }
-                else {
+                else
+                {
                     $psd1Content += "            " + $key + " = `"" + $value + "`"`r`n`r`n"
                 }
             }
@@ -618,7 +651,7 @@ function ConvertTo-ConfigurationDataString($PSObject)
 {
     $configDataContent = ""
     $objectType = $PSObject.GetType().FullName
-    switch($objectType)
+    switch ($objectType)
     {
         "System.String"
         {
@@ -627,11 +660,11 @@ function ConvertTo-ConfigurationDataString($PSObject)
         "System.Object[]"
         {
             $configDataContent += "            @(`r`n"
-            foreach($entry in $PSObject)
+            foreach ($entry in $PSObject)
             {
                 $configDataContent += ConvertTo-ConfigurationDataString $entry
             }
-            if($configDataContent.EndsWith(",`r`n"))
+            if ($configDataContent.EndsWith(",`r`n"))
             {
                 $configDataContent = $configDataContent.Remove($configDataContent.Length-3, 1)
             }
@@ -641,7 +674,7 @@ function ConvertTo-ConfigurationDataString($PSObject)
         "System.Collections.Hashtable"
         {
             $configDataContent += "            @{`r`n"
-            foreach($key in $PSObject.Keys)
+            foreach ($key in $PSObject.Keys)
             {
                 $configDataContent += "                " + $key + " = "
                 $configDataContent += ConvertTo-ConfigurationDataString $PSObject[$key]
@@ -657,7 +690,7 @@ $Global:AllUsers = @()
 
 function Add-ReverseDSCUserName($UserName)
 {
-    if(!$Global:AllUsers.Contains($UserName))
+    if (!$Global:AllUsers.Contains($UserName))
     {
         $Global:AllUsers += $UserName
     }
