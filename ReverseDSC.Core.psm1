@@ -69,9 +69,12 @@ function Get-DSCBlock
     param(
         [System.String] $ModulePath,
         [System.Collections.Hashtable] $Params,
-        [switch] $UseGetTargetResource = $false
+        [switch] $UseGetTargetResource = $false,
+        [int] $Indent = 1,
+        [switch] $AsFullConfigurationBlock,
+        [string] $FriendlyBlockName,
+        [string[]] $DependsOnClause
     )
-
     # Figure out what parameter has the longuest name, and get its Length;
     $maxParamNameLength = 0
     foreach ($param in $Params.Keys)
@@ -89,6 +92,17 @@ function Get-DSCBlock
     }
 
     $dscBlock = ""
+    if ($AsFullConfigurationBlock)
+    {
+        $DSCResource = Get-ResourceFriendlyName -ModulePath $ModulePath
+        if (-not ($FriendlyBlockName))
+        {
+            $FriendlyBlockName = [Guid]::NewGuid().ToString()
+        }
+        $dscBlock += "`t" * $Indent + $DSCResource + " " + "`"$FriendlyBlockName`"`r`n"
+        
+        $dscBlock += "`t" * $Indent + "{`r`n"
+    }
     $Params.Keys | ForEach-Object {
         if ($UseGetTargetResource)
         {
@@ -260,6 +274,17 @@ function Get-DSCBlock
         $dscBlock += "            " + $_  + $additionalSpaces + " = " + $value + ";`r`n"
     }
 
+        $dscBlock += "`t" * ($Indent + 1) + $_  + " = " + $value + ";`r`n"
+    }
+    if ($DependsOnClause)
+    {
+        $DependsOn = Get-DSCDependsOnBlock -dependsOnItems $DependsOnClause
+        $dscBlock += "`t" * ($Indent + 1) + "DependsOn = " + $DependsOn + ";`r`n" 
+    }
+    if ($AsFullConfigurationBlock)
+    {
+        $dscBlock +="`t" * $Indent + "}`r`n"
+    }
     return $dscBlock
 }
 
