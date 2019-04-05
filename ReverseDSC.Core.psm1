@@ -69,12 +69,9 @@ function Get-DSCBlock
     param(
         [System.String] $ModulePath,
         [System.Collections.Hashtable] $Params,
-        [switch] $UseGetTargetResource = $false,
-        [int] $Indent = 1,
-        [switch] $AsFullConfigurationBlock,
-        [string] $FriendlyBlockName,
-        [string[]] $DependsOnClause
+        [switch] $UseGetTargetResource = $false
     )
+
     # Figure out what parameter has the longuest name, and get its Length;
     $maxParamNameLength = 0
     foreach ($param in $Params.Keys)
@@ -92,17 +89,6 @@ function Get-DSCBlock
     }
 
     $dscBlock = ""
-    if ($AsFullConfigurationBlock)
-    {
-        $DSCResource = Get-ResourceFriendlyName -ModulePath $ModulePath
-        if (-not ($FriendlyBlockName))
-        {
-            $FriendlyBlockName = [Guid]::NewGuid().ToString()
-        }
-        $dscBlock += "`t" * $Indent + $DSCResource + " " + "`"$FriendlyBlockName`"`r`n"
-        
-        $dscBlock += "`t" * $Indent + "{`r`n"
-    }
     $Params.Keys | ForEach-Object {
         if ($UseGetTargetResource)
         {
@@ -152,7 +138,14 @@ function Get-DSCBlock
                     }
                     else
                     {
-                        $value = "`$Creds" + ($Params.Item($_).UserName.Split('\'))[1].Replace("-", "_").Replace(".", "_")
+                        if ($Params.Item($_).UserName.Contains("@") -and !$Params.Item($_).UserName.COntains("\"))
+                        {
+                            $value = "`$Creds" + ($Params.Item($_).UserName.Split('@'))[0]
+                        }
+                        else
+                        {
+                            $value = "`$Creds" + ($Params.Item($_).UserName.Split('\'))[1].Replace("-", "_").Replace(".", "_")
+                        }
                     }
                 }
             }
@@ -234,11 +227,26 @@ function Get-DSCBlock
         elseif ($paramType -eq "Object[]" -or $paramType -eq "Microsoft.Management.Infrastructure.CimInstance[]")
         {
             $array = $hash = $Params.Item($_)
-            $value = "@("
-            $array | ForEach-Object{
-                $value += $_
+            if ($array.Length -gt 0 -and $array[0].GetType().Name -eq "String")
+            {
+                $value = "@("
+                $hash| ForEach-Object {
+                    $value += "`"" + $_ + "`","
+                }
+                if($value.Length -gt 2)
+                {
+                    $value = $value.Substring(0,$value.Length -1)
+                }
+                $value += ")"
             }
-            $value += ")"
+            else
+            {
+                $value = "@("
+                $array | ForEach-Object{
+                    $value += $_
+                }
+                $value += ")"
+            }
         }
         elseif ($paramType -eq "CimInstance")
         {
@@ -274,17 +282,6 @@ function Get-DSCBlock
         $dscBlock += "            " + $_  + $additionalSpaces + " = " + $value + ";`r`n"
     }
 
-        $dscBlock += "`t" * ($Indent + 1) + $_  + " = " + $value + ";`r`n"
-    }
-    if ($DependsOnClause)
-    {
-        $DependsOn = Get-DSCDependsOnBlock -dependsOnItems $DependsOnClause
-        $dscBlock += "`t" * ($Indent + 1) + "DependsOn = " + $DependsOn + ";`r`n" 
-    }
-    if ($AsFullConfigurationBlock)
-    {
-        $dscBlock +="`t" * $Indent + "}`r`n"
-    }
     return $dscBlock
 }
 
