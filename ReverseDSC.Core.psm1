@@ -138,7 +138,14 @@ function Get-DSCBlock
                     }
                     else
                     {
-                        $value = "`$Creds" + ($Params.Item($_).UserName.Split('\'))[1].Replace("-", "_").Replace(".", "_")
+                        if ($Params.Item($_).UserName.Contains("@") -and !$Params.Item($_).UserName.COntains("\"))
+                        {
+                            $value = "`$Creds" + ($Params.Item($_).UserName.Split('@'))[0]
+                        }
+                        else
+                        {
+                            $value = "`$Creds" + ($Params.Item($_).UserName.Split('\'))[1].Replace("-", "_").Replace(".", "_")
+                        }
                     }
                 }
             }
@@ -220,11 +227,26 @@ function Get-DSCBlock
         elseif ($paramType -eq "Object[]" -or $paramType -eq "Microsoft.Management.Infrastructure.CimInstance[]")
         {
             $array = $hash = $Params.Item($_)
-            $value = "@("
-            $array | ForEach-Object{
-                $value += $_
+            if ($array.Length -gt 0 -and $array[0].GetType().Name -eq "String")
+            {
+                $value = "@("
+                $hash| ForEach-Object {
+                    $value += "`"" + $_ + "`","
+                }
+                if($value.Length -gt 2)
+                {
+                    $value = $value.Substring(0,$value.Length -1)
+                }
+                $value += ")"
             }
-            $value += ")"
+            else
+            {
+                $value = "@("
+                $array | ForEach-Object{
+                    $value += $_
+                }
+                $value += ")"
+            }
         }
         elseif ($paramType -eq "CimInstance")
         {
