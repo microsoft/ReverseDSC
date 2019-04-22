@@ -227,7 +227,8 @@ function Get-DSCBlock
         elseif ($paramType -eq "Object[]" -or $paramType -eq "Microsoft.Management.Infrastructure.CimInstance[]")
         {
             $array = $hash = $Params.Item($_)
-            if ($array.Length -gt 0 -and $array[0].GetType().Name -eq "String")
+
+            if ($array.Length -gt 0 -and ($array[0].GetType().Name -eq "String" -and $paramType -ne "Microsoft.Management.Infrastructure.CimInstance[]"))
             {
                 $value = "@("
                 $hash| ForEach-Object {
@@ -507,18 +508,18 @@ function Convert-DSCStringParamToVariable([string]$DSCBlock, [string]$ParameterN
 }
 
 <# Region ConfigurationData Methods #>
-$Global:ConfigurationData = @{}
+$ConfigurationDataContent = @{}
 
 function Add-ConfigurationDataEntry($Node, $Key, $Value, $Description)
 {
-    if ($null -eq $Global:ConfigurationData[$Node])
+    if ($null -eq $ConfigurationDataContent[$Node])
     {
-        $Global:ConfigurationData.Add($Node, @{})
-        $Global:ConfigurationData[$Node].Add("Entries", @{})
+        $ConfigurationDataContent.Add($Node, @{})
+        $ConfigurationDataContent[$Node].Add("Entries", @{})
     }
-    if (!$Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
+    if (!$ConfigurationDataContent[$Node].Entries.ContainsKey($Key))
     {
-        $Global:ConfigurationData[$Node].Entries.Add($Key, @{Value = $Value; Description = $Description})
+        $ConfigurationDataContent[$Node].Entries.Add($Key, @{Value = $Value; Description = $Description})
     }
 }
 
@@ -527,28 +528,28 @@ function Get-ConfigurationDataEntry($Node, $Key)
     <# If node is null, then search in all nodes and return first result found. #>
     if ($null -eq $Node)
     {
-        foreach ($Node in $Global:ConfigurationData.Keys)
+        foreach ($Node in $ConfigurationDataContent.Keys)
         {
-            if ($Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
+            if ($ConfigurationDataContent[$Node].Entries.ContainsKey($Key))
             {
-                return $Global:ConfigurationData[$Node].Entries[$Key]
+                return $ConfigurationDataContent[$Node].Entries[$Key]
             }
         }
     }
     else
     {
-        if ($Global:ConfigurationData[$Node].Entries.ContainsKey($Key))
+        if ($ConfigurationDataContent[$Node].Entries.ContainsKey($Key))
         {
-            return $Global:ConfigurationData[$Node].Entries[$Key]
+            return $ConfigurationDataContent[$Node].Entries[$Key]
         }
     }
 }
 
-function Get-ConfigurationDataContent
+function Get-$ConfigurationDataContent
 {
     $psd1Content = "@{`r`n"
     $psd1Content += "    AllNodes = @(`r`n"
-    foreach ($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -ne "nonnodedata"})
+    foreach ($node in $ConfigurationDataContent.Keys.Where{$_.ToLower() -ne "nonnodedata"})
     {
         $psd1Content += "        @{`r`n"
         $psd1Content += "            NodeName                    = `"" + $node + "`"`r`n"
@@ -557,7 +558,7 @@ function Get-ConfigurationDataContent
         $psd1Content += "            # CertificateFile           = `"\\<location>\<file>.cer`";`r`n"
         $psd1Content += "            # Thumbprint                = `xxxxxxxxxxxxxxxxxxxxxxx`r`n`r`n"
         $psd1Content += "            #region Parameters`r`n"
-        $keyValuePair = $Global:ConfigurationData[$node].Entries
+        $keyValuePair = $ConfigurationDataContent[$node].Entries
         foreach ($key in $keyValuePair.Keys)
         {
             if ($null -ne $keyValuePair[$key].Description)
@@ -588,10 +589,10 @@ function Get-ConfigurationDataContent
 
     $psd1Content += "    )`r`n"
     $psd1Content += "    NonNodeData = @(`r`n"
-    foreach ($node in $Global:ConfigurationData.Keys.Where{$_.ToLower() -eq "nonnodedata"})
+    foreach ($node in $ConfigurationDataContent.Keys.Where{$_.ToLower() -eq "nonnodedata"})
     {
         $psd1Content += "        @{`r`n"
-        $keyValuePair = $Global:ConfigurationData[$node].Entries
+        $keyValuePair = $ConfigurationDataContent[$node].Entries
         foreach ($key in $keyValuePair.Keys)
         {
             try
@@ -641,7 +642,7 @@ function Get-ConfigurationDataContent
 
 function New-ConfigurationDataDocument($Path)
 {
-    Get-ConfigurationDataContent | Out-File -FilePath $Path
+    Get-$ConfigurationDataContent | Out-File -FilePath $Path
 }
 
 function ConvertTo-ConfigurationDataString($PSObject)
