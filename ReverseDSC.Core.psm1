@@ -154,7 +154,7 @@ function Get-DSCBlock
                 $value = "Get-Credential -Message " + $_
             }
         }
-        elseif ($paramType -eq "System.Collections.Hashtable")
+        elseif ($paramType -eq "System.Collections.Hashtable" -or $paramType -eq "Hashtable")
         {
             $value = "@{"
             $hash = $Params.Item($_)
