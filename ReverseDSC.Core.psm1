@@ -162,13 +162,13 @@ function Get-DSCBlock
                 try
                 {
                     $value += $_ + " = `"" + $hash.Item($_) + "`"; "
-                    $value += "}"
                 }
                 catch
                 {
                     $value = $hash
                 }
             }
+            $value += "}"
         }
         elseif ($paramType -eq "System.String[]" -or $paramType -eq "String[]" -or $paramType -eq "ArrayList" -or $paramType -eq "List``1")
         {
