@@ -107,7 +107,7 @@ function Get-DSCBlock
         }
 
         $value = $null
-        if ($paramType -eq "System.String" -or $paramType -eq "String" -or $paramType -eq "Guid")
+        if ($paramType -eq "System.String" -or $paramType -eq "String" -or $paramType -eq "Guid" -or $paramType -eq 'TimeSpan')
         {
             if (!$null -eq $Params.Item($_))
             {
@@ -480,29 +480,43 @@ function Test-Credentials([string] $UserName)
     return $false
 }
 
-function Convert-DSCStringParamToVariable([string]$DSCBlock, [string]$ParameterName)
+function Convert-DSCStringParamToVariable([string]$DSCBlock, [string]$ParameterName, [boolean]$ISCIMArray)
 {
     $startPosition = $DSCBlock.IndexOf($ParameterName)
-    $enfOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
+    $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
 
     $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
 
-    if ($enfOfLinePosition -gt $startPosition)
+    while ($startPosition -ge 0 -and $startPosition -lt $endOfLinePosition)
     {
-        if ($startPosition -ge 0)
+        $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
+        if ($endOfLinePosition -gt $startPosition)
         {
-            $endPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
-            if ($endPosition -lt 0)
+            if ($startPosition -ge 0)
             {
-                $endPosition = $DSCBlock.IndexOf("'", $startPosition + 1)
-            }
+                $endPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
+                if ($endPosition -lt 0)
+                {
+                    $endPosition = $DSCBlock.IndexOf("'", $startPosition + 1)
+                }
 
-            if ($endPosition -ge 0)
-            {
-                $DSCBlock = $DSCBlock.Remove($startPosition, 1)
-                $DSCBlock = $DSCBlock.Remove($endPosition-1, 1)
+                if ($endPosition -ge 0 -and $endPosition -le $endofLinePosition)
+                {
+                    $DSCBlock = $DSCBlock.Remove($startPosition, 1)
+                    $DSCBlock = $DSCBlock.Remove($endPosition-1, 1)
+                }
+                else
+                {
+                    $startPosition = -1
+                }
             }
         }
+        $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
+    }
+
+    if($IsCIMArray)
+    {
+        $DSCBlock = $DSCBlock.Replace("}`r`n,", "`}`r`n")
     }
     return $DSCBlock
 }
