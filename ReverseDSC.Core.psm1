@@ -72,9 +72,17 @@ function Get-DSCBlock
         [switch] $UseGetTargetResource = $false
     )
 
+    $Sorted = $Params.GetEnumerator() | Sort-Object -Property Name
+    $NewParams = [Ordered]@{}
+
+    foreach($entry in $Sorted)
+    {
+        $NewParams.Add($entry.Key, $entry.Value)
+    }
+
     # Figure out what parameter has the longuest name, and get its Length;
     $maxParamNameLength = 0
-    foreach ($param in $Params.Keys)
+    foreach ($param in $NewParams.Keys)
     {
         if ($param.Length -gt $maxParamNameLength)
         {
@@ -89,16 +97,16 @@ function Get-DSCBlock
     }
 
     $dscBlock = ""
-    $Params.Keys | ForEach-Object {
+    $NewParams.Keys | ForEach-Object {
         if ($UseGetTargetResource)
         {
             $paramType = Get-DSCParamType -ModulePath $ModulePath -ParamName "`$$_"
         }
         else
         {
-            if ($null -ne $Params[$_])
+            if ($null -ne $NewParams[$_])
             {
-                $paramType = $Params[$_].GetType().Name
+                $paramType = $NewParams[$_].GetType().Name
             }
             else
             {
@@ -109,42 +117,42 @@ function Get-DSCBlock
         $value = $null
         if ($paramType -eq "System.String" -or $paramType -eq "String" -or $paramType -eq "Guid" -or $paramType -eq 'TimeSpan')
         {
-            if (!$null -eq $Params.Item($_))
+            if (!$null -eq $NewParams.Item($_))
             {
-                $value = "`"" + $Params.Item($_).ToString().Replace("`"", "```"") + "`""
+                $value = "`"" + $NewParams.Item($_).ToString().Replace("`"", "```"") + "`""
             }
             else
             {
-                $value = "`"" + $Params.Item($_) + "`""
+                $value = "`"" + $NewParams.Item($_) + "`""
             }
         }
         elseif ($paramType -eq "System.Boolean" -or $paramType -eq "Boolean")
         {
-            $value = "`$" + $Params.Item($_)
+            $value = "`$" + $NewParams.Item($_)
         }
         elseif ($paramType -eq "System.Management.Automation.PSCredential")
         {
-            if ($null -ne $Params.Item($_))
+            if ($null -ne $NewParams.Item($_))
             {
-                if ($Params.Item($_).ToString() -like "`$Creds*")
+                if ($NewParams.Item($_).ToString() -like "`$Creds*")
                 {
-                    $value = $Params.Item($_).Replace("-", "_").Replace(".", "_")
+                    $value = $NewParams.Item($_).Replace("-", "_").Replace(".", "_")
                 }
                 else
                 {
-                    if ($null -eq $Params.Item($_).UserName)
+                    if ($null -eq $NewParams.Item($_).UserName)
                     {
-                        $value = "`$Creds" + ($Params.Item($_).Split('\'))[1].Replace("-", "_").Replace(".", "_")
+                        $value = "`$Creds" + ($NewParams.Item($_).Split('\'))[1].Replace("-", "_").Replace(".", "_")
                     }
                     else
                     {
-                        if ($Params.Item($_).UserName.Contains("@") -and !$Params.Item($_).UserName.COntains("\"))
+                        if ($NewParams.Item($_).UserName.Contains("@") -and !$NewParams.Item($_).UserName.COntains("\"))
                         {
-                            $value = "`$Creds" + ($Params.Item($_).UserName.Split('@'))[0]
+                            $value = "`$Creds" + ($NewParams.Item($_).UserName.Split('@'))[0]
                         }
                         else
                         {
-                            $value = "`$Creds" + ($Params.Item($_).UserName.Split('\'))[1].Replace("-", "_").Replace(".", "_")
+                            $value = "`$Creds" + ($NewParams.Item($_).UserName.Split('\'))[1].Replace("-", "_").Replace(".", "_")
                         }
                     }
                 }
@@ -157,7 +165,7 @@ function Get-DSCBlock
         elseif ($paramType -eq "System.Collections.Hashtable" -or $paramType -eq "Hashtable")
         {
             $value = "@{"
-            $hash = $Params.Item($_)
+            $hash = $NewParams.Item($_)
             $hash.Keys | foreach-object {
                 try
                 {
@@ -172,7 +180,7 @@ function Get-DSCBlock
         }
         elseif ($paramType -eq "System.String[]" -or $paramType -eq "String[]" -or $paramType -eq "ArrayList" -or $paramType -eq "List``1")
         {
-            $hash = $Params.Item($_)
+            $hash = $NewParams.Item($_)
             if ($hash -and !$hash.ToString().StartsWith("`$ConfigurationData."))
             {
                 $value = "@("
@@ -199,7 +207,7 @@ function Get-DSCBlock
         }
         elseif ($paramType -eq "System.UInt32[]")
         {
-            $hash = $Params.Item($_)
+            $hash = $NewParams.Item($_)
             if ($hash)
             {
                 $value = "@("
@@ -226,7 +234,7 @@ function Get-DSCBlock
         }
         elseif ($paramType -eq "Object[]" -or $paramType -eq "Microsoft.Management.Infrastructure.CimInstance[]")
         {
-            $array = $hash = $Params.Item($_)
+            $array = $hash = $NewParams.Item($_)
 
             if ($array.Length -gt 0 -and ($array[0].GetType().Name -eq "String" -and $paramType -ne "Microsoft.Management.Infrastructure.CimInstance[]"))
             {
@@ -251,23 +259,23 @@ function Get-DSCBlock
         }
         elseif ($paramType -eq "CimInstance")
         {
-            $value = $Params[$_]
+            $value = $NewParams[$_]
         }
         else
         {
-            if ($null -eq $Params[$_])
+            if ($null -eq $NewParams[$_])
             {
                 $value = "`$null"
             }
             else
             {
-                if($Params[$_].GetType().BaseType.Name -eq "Enum")
+                if($NewParams[$_].GetType().BaseType.Name -eq "Enum")
                 {
-                    $value = "`"" + $Params.Item($_) + "`""
+                    $value = "`"" + $NewParams.Item($_) + "`""
                 }
                 else
                 {
-                    $value = $Params.Item($_)
+                    $value = $NewParams.Item($_)
                 }
             }
         }
