@@ -6,7 +6,7 @@
 # Generated on: 30/10/2019
 #
 @{
-    ModuleVersion = '1.9.5.1'
+    ModuleVersion = '2.0.0.0'
     GUID = '6c1176a0-4fac-4134-8ca2-3fa8a21a7b90'
     Author = 'Microsoft Corporation'
     CompanyName = 'Microsoft Corporation'
@@ -47,8 +47,7 @@
             IconUri = 'https://github.com/Microsoft/ReverseDSC/blob/master/Images/DSCModuleIcon.png?raw=true'
 
             ReleaseNotes = '
-            * Fixed minor issue where property name where value to convert to property existed as a
-              subset of another property or as part of another property value;'
+            * Major cleanup of solution and refactoring of help content;'
 
         } # End of PSData hashtable
 
