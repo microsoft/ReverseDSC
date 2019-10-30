@@ -490,14 +490,31 @@ function Test-Credentials([string] $UserName)
 
 function Convert-DSCStringParamToVariable([string]$DSCBlock, [string]$ParameterName, [boolean]$ISCIMArray)
 {
-    $startPosition = $DSCBlock.IndexOf($ParameterName)
+    # There is a possibility that a parameter's value will contain the name of the property
+# or that another property will contain a subset of it.
+$startPosition = $DSCBlock.IndexOf("$ParameterName")
+
+# If quotes appear before an equal sign, when starting from the assumed start position,
+# then the start position is invalid, searhc for another instance of the Parameter;
+$startPosition = -1
+do
+{
+    $startPosition = $DSCBlock.IndexOf("$ParameterName", $startPosition + 1)
+    $testValidStartPositionEqual = $DSCBlock.IndexOf("=", $startPosition)
+    $testValidStartPositionQuotes = $DSCBlock.IndexOf("`"", $startPosition)
+} while ($testValidStartPositionEqual -gt $testValidStartPositionQuotes -and 
+         $startPosition -ne -1)
+
     $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
 
+    if ($endOfLinePosition -eq -1)
+    {
+        $endOfLinePosition = $DSCBlock.Length
+    }
     $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
 
     while ($startPosition -ge 0 -and $startPosition -lt $endOfLinePosition)
     {
-        $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
         if ($endOfLinePosition -gt $startPosition)
         {
             if ($startPosition -ge 0)
