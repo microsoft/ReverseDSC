@@ -38,42 +38,42 @@ Name of the parameter in the module we want to determine the Data Type for.
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($ModulePath, [ref] $tokens, [ref] $errors)
     $functions = $ast.FindAll( {$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]}, $true)
 
-    $functions | ForEach-Object{
-        if ($_.Name -eq "Set-TargetResource")
+    ForEach($function in $functions){
+        if ($function.Name -eq "Set-TargetResource")
         {
-            $functionAst = [System.Management.Automation.Language.Parser]::ParseInput($_.Body, [ref] $tokens, [ref] $errors)
+            $functionAst = [System.Management.Automation.Language.Parser]::ParseInput($function.Body, [ref] $tokens, [ref] $errors)
 
             $parameters = $functionAst.FindAll( {$args[0] -is [System.Management.Automation.Language.ParameterAst]}, $true)
-            $parameters | ForEach-Object{
-                if ($_.Name.Extent.Text -eq $ParamName)
+            ForEach($parameter in $parameters){
+                if ($parameter.Name.Extent.Text -eq $ParamName)
                 {
-                    $attributes = $_.Attributes
-                    $attributes | ForEach-Object{
-                        if ($_.TypeName.FullName -like "System.*")
+                    $attributes = $parameter.Attributes
+                    ForEach($attribute in $attributes){
+                        if ($attribute.TypeName.FullName -like "System.*")
                         {
-                            return $_.TypeName.FullName
+                            return $attribute.TypeName.FullName
                         }
-                        elseif ($_.TypeName.FullName.ToLower() -eq "microsoft.management.infrastructure.ciminstance")
+                        elseif ($attribute.TypeName.FullName.ToLower() -eq "microsoft.management.infrastructure.ciminstance")
                         {
                             return "System.Collections.Hashtable"
                         }
-                        elseif ($_.TypeName.FullName.ToLower() -eq "string")
+                        elseif ($attribute.TypeName.FullName.ToLower() -eq "string")
                         {
                             return "System.String"
                         }
-                        elseif ($_.TypeName.FullName.ToLower() -eq "boolean")
+                        elseif ($attribute.TypeName.FullName.ToLower() -eq "boolean")
                         {
                             return "System.Boolean"
                         }
-                        elseif ($_.TypeName.FullName.ToLower() -eq "bool")
+                        elseif ($attribute.TypeName.FullName.ToLower() -eq "bool")
                         {
                             return "System.Boolean"
                         }
-                        elseif ($_.TypeName.FullName.ToLower() -eq "string[]")
+                        elseif ($attribute.TypeName.FullName.ToLower() -eq "string[]")
                         {
                             return "System.String[]"
                         }
-                        elseif ($_.TypeName.FullName.ToLower() -eq "microsoft.management.infrastructure.ciminstance[]")
+                        elseif ($attribute.TypeName.FullName.ToLower() -eq "microsoft.management.infrastructure.ciminstance[]")
                         {
                             return "Microsoft.Management.Infrastructure.CimInstance[]"
                         }
@@ -82,7 +82,6 @@ Name of the parameter in the module we want to determine the Data Type for.
             }
         }
      }
-     return $null
  }
 
 function Get-DSCBlock
