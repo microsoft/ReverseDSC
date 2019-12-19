@@ -806,7 +806,7 @@ The name of the parameter to retrieve the value from.
         [System.String]
         $Node,
 
-        [Parameter(Mandatpry = $true)]
+        [Parameter(Mandatory = $true)]
         [System.String]
         $Key
     )
