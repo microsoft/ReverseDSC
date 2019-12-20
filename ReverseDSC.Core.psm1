@@ -348,7 +348,7 @@ In most cases this will be the full path to the .psm1 file of the DSC resource.
 
 #>
     [CmdletBinding()]
-    [OutputType([System.Management.Automation.Hashtable])]
+    [OutputType([System.Collections.Hashtable])]
     param(
         [Parameter(Mandatory = $true)]
         [System.String]
