@@ -120,7 +120,10 @@ Hashtable that contains the list of Key properties and their values.
 
     foreach($entry in $Sorted)
     {
-        $NewParams.Add($entry.Key, $entry.Value)
+        if ($null -ne $entry.Value)
+        {
+            $NewParams.Add($entry.Key, $entry.Value)
+        }
     }
 
     # Figure out what parameter has the longuest name, and get its Length;
