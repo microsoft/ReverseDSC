@@ -856,8 +856,6 @@ hashtable for the ConfigurationData content as a formatted string.
         $psd1Content += "            NodeName                    = `"" + $node + "`"`r`n"
         $psd1Content += "            PSDscAllowPlainTextPassword = `$true;`r`n"
         $psd1Content += "            PSDscAllowDomainUser        = `$true;`r`n"
-        $psd1Content += "            # CertificateFile           = `"\\<location>\<file>.cer`";`r`n"
-        $psd1Content += "            # Thumbprint                = `xxxxxxxxxxxxxxxxxxxxxxx`r`n`r`n"
         $psd1Content += "            #region Parameters`r`n"
         $keyValuePair = $ConfigurationDataContent[$node].Entries
         foreach ($key in $keyValuePair.Keys)
