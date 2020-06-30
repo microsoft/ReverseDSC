@@ -650,6 +650,12 @@ we should not have commas in between items it contains.
 
     while ($startPosition -ge 0 -and $startPosition -lt $endOfLinePosition)
     {
+        $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
+
+        if ($endOfLinePosition -eq -1)
+        {
+            $endOfLinePosition = $DSCBlock.Length
+        }
         if ($endOfLinePosition -gt $startPosition)
         {
             if ($startPosition -ge 0)
