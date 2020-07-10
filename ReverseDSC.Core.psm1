@@ -769,7 +769,7 @@ top of the parameter.
         $Key,
 
         [Parameter(Mandatory = $true)]
-        [System.String]
+        [System.Object]
         $Value, 
 
         [Parameter()]
