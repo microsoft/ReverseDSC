@@ -208,7 +208,7 @@ Hashtable that contains the list of Key properties and their values.
             $hash.Keys | foreach-object {
                 try
                 {
-                    $value += $_ + " = `"" + $hash.Item($_) + "`"; "
+                    $value += $_.ToString() + " = `"" + $hash.Item($_).ToString() + "`"; "
                 }
                 catch
                 {
