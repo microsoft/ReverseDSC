@@ -314,7 +314,7 @@ Hashtable that contains the list of Key properties and their values.
                 }
                 else
                 {
-                    $value = $NewParams.Item($_)
+                    $value = "'$($NewParams.Item($_))'"
                 }
             }
         }
