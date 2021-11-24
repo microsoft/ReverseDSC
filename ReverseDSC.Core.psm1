@@ -154,7 +154,7 @@ Hashtable that contains the list of Key properties and their values.
         }
 
         $value = $null
-        if ($paramType -eq "System.String" -or $paramType -eq "String" -or $paramType -eq "Guid" -or $paramType -eq 'TimeSpan')
+        if ($paramType -eq "System.String" -or $paramType -eq "String" -or $paramType -eq "Guid" -or $paramType -eq 'TimeSpan' -or $paramType -eq 'DateTime')
         {
             if (!$null -eq $NewParams.Item($_))
             {
@@ -314,7 +314,7 @@ Hashtable that contains the list of Key properties and their values.
                 }
                 else
                 {
-                    $value = "'$($NewParams.Item($_))'"
+                    $value = "$($NewParams.Item($_))"
                 }
             }
         }
