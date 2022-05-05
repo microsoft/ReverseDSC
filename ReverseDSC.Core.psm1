@@ -319,11 +319,7 @@ Hashtable that contains the list of Key properties and their values.
                     {
                         $value = $value.Substring(0, $value.Length - 2)
                     }
-                    $value += "},"
-                }
-                if ($value.Length -gt 2)
-                {
-                    $value = $value.Substring(0, $value.Length - 1)
+                    $value += "}"
                 }
                 $value += ")"
             }
