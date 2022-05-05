@@ -208,7 +208,7 @@ Hashtable that contains the list of Key properties and their values.
         {
             $value = "@{"
             $hash = $NewParams.Item($_)
-            $hash.Keys | foreach-object {
+            $hash.Keys | ForEach-Object {
                 try
                 {
                     $value += $_.ToString() + " = `"" + $hash.Item($_).ToString() + "`"; "
@@ -283,6 +283,43 @@ Hashtable that contains the list of Key properties and their values.
                 $value = "@("
                 $hash | ForEach-Object {
                     $value += "`"" + $_ + "`","
+                }
+                if ($value.Length -gt 2)
+                {
+                    $value = $value.Substring(0, $value.Length - 1)
+                }
+                $value += ")"
+            }
+            elseif ($array.Length -gt 0 -and $array[0].GetType().Name -eq "Hashtable")
+            {
+                $value = "@("
+                foreach ($hashtable in $array)
+                {
+                    $value += "@{"
+                    foreach ($pair in $Hashtable.GetEnumerator())
+                    {
+                        if ($pair.Value -is [System.Array])
+                        {
+                            $str = "$($pair.Key)=@('$($pair.Value-join "', '")')"
+                        }
+                        else
+                        {
+                            if ($null -eq $pair.Value)
+                            {
+                                $str = "$($pair.Key)=`$null"
+                            }
+                            else
+                            {
+                                $str = "$($pair.Key)='$($pair.Value)'"
+                            }
+                        }
+                        $value += "$str, "
+                    }
+                    if ($value.Length -gt 2)
+                    {
+                        $value = $value.Substring(0, $value.Length - 2)
+                    }
+                    $value += "},"
                 }
                 if ($value.Length -gt 2)
                 {
