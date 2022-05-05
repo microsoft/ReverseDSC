@@ -313,7 +313,7 @@ Hashtable that contains the list of Key properties and their values.
                                 $str = "$($pair.Key)='$($pair.Value)'"
                             }
                         }
-                        $value += "$str, "
+                        $value += "$str; "
                     }
                     if ($value.Length -gt 2)
                     {
