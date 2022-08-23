@@ -118,7 +118,8 @@ Hashtable that contains the list of Key properties and their values.
         $Params
     )
 
-    $Sorted = $Params.GetEnumerator() | Sort-Object -Property Name
+    # Sort the params by name(key), exclude _metadata_* properties (coming from DSCParser)
+    $Sorted = $Params.GetEnumerator() | Sort-Object -Property Name | Where-Object {$_.Name -notlike '_metadata_*'}
     $NewParams = [Ordered]@{}
 
     foreach ($entry in $Sorted)
@@ -363,7 +364,14 @@ Hashtable that contains the list of Key properties and their values.
         {
             $additionalSpaces += " "
         }
-        $dscBlock += "            " + $_ + $additionalSpaces + " = " + $value + ";`r`n"
+        # Check for comment/metadata and insert it back here
+        $PropertyMetadataKeyName="_metadata_$($_)"
+        if ($Params.ContainsKey($PropertyMetadataKeyName)) {
+            $CommentValue=' '+$Params[$PropertyMetadataKeyName]
+        } Else {
+            $CommentValue=''
+        }
+        $dscBlock += "            " + $_ + $additionalSpaces + " = " + $value + ";" + $CommentValue + "`r`n"
     }
 
     return $dscBlock
