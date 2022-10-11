@@ -670,16 +670,13 @@ we should not have commas in between items it contains.
         [System.Boolean]
         $IsCIMArray = $false
     )
-    # There is a possibility that a parameter's value will contain the name of the property
-    # or that another property will contain a subset of it.
-    $startPosition = $DSCBlock.IndexOf($ParameterName)
 
     # If quotes appear before an equal sign, when starting from the assumed start position,
-    # then the start position is invalid, searhc for another instance of the Parameter;
+    # then the start position is invalid, search for another instance of the Parameter;
     $startPosition = -1
     do
     {
-        $startPosition = $DSCBlock.IndexOf($ParameterName, $startPosition + 1)
+        $startPosition = $DSCBlock.IndexOf(' ' + $ParameterName + ' ', $startPosition + 1)
         $testValidStartPositionEqual = $DSCBlock.IndexOf("=", $startPosition)
         $testValidStartPositionQuotes = $DSCBlock.IndexOf("`"", $startPosition)
     } while ($testValidStartPositionEqual -gt $testValidStartPositionQuotes -and
