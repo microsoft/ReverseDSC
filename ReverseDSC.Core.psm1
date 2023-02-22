@@ -760,8 +760,9 @@ we should not have commas in between items it contains.
 
     if ($IsCIMArray)
     {
-        $DSCBlock = $DSCBlock.Replace("}`r`n,", "`}`r`n")
         $DSCBlock = $DSCBlock.Replace("},`r`n", "`}`r`n")
+        #$DSCBlock = $DSCBlock.Replace("}`r`n,", "`}`r`n")  # see bbelow
+        $DSCBlock = $DSCBlock -replace "\}`r`n\s*,", "}`r`n," # replace "}<crlf>[<whitespace>]," with "}<crlf>"
     }
     return $DSCBlock
 }
