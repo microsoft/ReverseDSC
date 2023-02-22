@@ -677,18 +677,26 @@ we should not have commas in between items it contains.
     do
     {
         $startPosition = $DSCBlock.IndexOf(' ' + $ParameterName + ' ', $startPosition + 1)
-        $testValidStartPositionEqual = $DSCBlock.IndexOf("=", $startPosition)
-        $testValidStartPositionQuotes = $DSCBlock.IndexOf("`"", $startPosition)
+        # If the ParameterName is not found, $startPosition is still -1, and .IndexOf($string, $startPosition) does not work
+        if ($startPosition -ne -1)
+        {
+            $testValidStartPositionEqual = $DSCBlock.IndexOf("=", $startPosition)
+            $testValidStartPositionQuotes = $DSCBlock.IndexOf("`"", $startPosition)
+        }
     } while ($testValidStartPositionEqual -gt $testValidStartPositionQuotes -and
         $startPosition -ne -1)
 
-    $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
-
-    if ($endOfLinePosition -eq -1)
-    {
-        $endOfLinePosition = $DSCBlock.Length
+    # If $ParameterName was not found i.e. $startPosition is still -1, skip this section as well.
+    # We just want the original DSCBlock to be returned.
+    if ($startPosition -ne -1) {
+        $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
+        
+        if ($endOfLinePosition -eq -1)
+        {
+            $endOfLinePosition = $DSCBlock.Length
+        }
+        $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
     }
-    $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
 
     while ($startPosition -ge 0 -and $startPosition -lt $endOfLinePosition)
     {
