@@ -146,7 +146,7 @@ Hashtable that contains the list of Key properties and their values.
         $maxParamNameLength = 20
     }
 
-    $dscBlock = ""
+    $dscBlock = [System.Text.StringBuilder]::New()
     $NewParams.Keys | ForEach-Object {
         if ($null -ne $NewParams[$_])
         {
@@ -279,7 +279,7 @@ Hashtable that contains the list of Key properties and their values.
         {
             $array = $hash = $NewParams.Item($_)
 
-            if ($array.Length -gt 0 -and ($array[0].GetType().Name -eq "String" -and $paramType -ne "Microsoft.Management.Infrastructure.CimInstance[]"))
+            if ($array.Length -gt 0 -and ($null -ne $array[0] -and $array[0].GetType().Name -eq "String" -and $paramType -ne "Microsoft.Management.Infrastructure.CimInstance[]"))
             {
                 $value = "@("
                 $hash | ForEach-Object {
@@ -291,7 +291,7 @@ Hashtable that contains the list of Key properties and their values.
                 }
                 $value += ")"
             }
-            elseif ($array.Length -gt 0 -and $array[0].GetType().Name -eq "Hashtable")
+            elseif ($array.Length -gt 0 -and ($null -ne $array[0] -and $array[0].GetType().Name -eq "Hashtable"))
             {
                 $value = "@("
                 foreach ($hashtable in $array)
@@ -371,10 +371,10 @@ Hashtable that contains the list of Key properties and their values.
         } Else {
             $CommentValue=''
         }
-        $dscBlock += "            " + $_ + $additionalSpaces + " = " + $value + ";" + $CommentValue + "`r`n"
+        [void]$dscBlock.Append("            " + $_ + $additionalSpaces + " = " + $value + ";" + $CommentValue + "`r`n")
     }
 
-    return $dscBlock
+    return $dscBlock.ToString()
 }
 
 function Get-DSCFakeParameters
