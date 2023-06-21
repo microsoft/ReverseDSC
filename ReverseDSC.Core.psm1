@@ -769,12 +769,8 @@ we should not have commas in between items it contains.
     if ($IsCIMArray)
     {
         $DSCBlock = $DSCBlock.Replace("},`r`n", "`}`r`n")
-        #$DSCBlock = $DSCBlock.Replace("}`r`n,", "`}`r`n") # see below
-        $DSCBlock = $DSCBlock -replace "\}`r`n\s*,", "}`r`n," # replace "}<crlf>[<whitespace>]," with "}<crlf>"
-
-        $DSCBlock = $DSCBlock.replace("    ,`r`n", "    `r`n")
-        $DSCBlock = $DSCBlock.replace("`r`n;`r`n", "`r`n")
-        $DSCBlock = $DSCBlock.replace("`r`n,`r`n", "`r`n")
+        #$DSCBlock = $DSCBlock.Replace("`r`n,`r`n", "`r`n") # see below
+        $DSCBlock = $DSCBlock -replace "`r`n\s*,`r`n", "`r`n" # replace "<crlf>[<whitespace>],<crlf>" with "<crlf>"
     }
     return $DSCBlock
 }
