@@ -770,6 +770,7 @@ we should not have commas in between items it contains.
     {
         $DSCBlock = $DSCBlock.Replace("},`r`n", "`}`r`n")
         $DSCBlock = $DSCBlock -replace "`r`n\s*[,;]`r`n", "`r`n" # replace "<crlf>[<whitespace>][,;]<crlf>" with "<crlf>"
+        $DSCBlock = $DSCBLock.Replace('}");', "}`r`n            )")
     }
     return $DSCBlock
 }
