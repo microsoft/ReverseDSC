@@ -770,6 +770,23 @@ we should not have commas in between items it contains.
     {
         $DSCBlock = $DSCBlock.Replace("},`r`n", "`}`r`n")
         $DSCBlock = $DSCBlock -replace "`r`n\s*[,;]`r`n", "`r`n" # replace "<crlf>[<whitespace>][,;]<crlf>" with "<crlf>"
+
+        # There are cases where the closing ')' of a CIMInstance array still has leading quotes.
+        # This ensures we clean those out.
+        $indexOfProperty = $DSCBlock.IndexOf($ParameterName)
+        if ($indexOfProperty -ge 0)
+        {
+            $indexOfEndOfLine = $DSCBlock.IndexOf(";`r`n", $indexOfProperty)
+            if ($indexOfEndOfLine -gt 0 -and $indexOfEndOfLine -gt $indexOfProperty)
+            {
+                $propertyString = $DSCBlock.Substring($indexOfProperty, $indexOfEndOfLine - $indexOfProperty + 1)
+                if ($propertyString.EndsWith("}`");"))
+                {
+                    $fixedPropertyString = $propertyString.Replace("}`");", "}`r`n            );")
+                    $DSCBlock = $DSCBLock.Replace($propertyString, $fixedPropertyString)
+                }
+            }
+        }
         #$DSCBlock = $DSCBLock.Replace('}");', "}`r`n            )")
     }
     return $DSCBlock
