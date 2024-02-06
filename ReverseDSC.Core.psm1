@@ -685,23 +685,23 @@ we should not have commas in between items it contains.
         }
     } while ($testValidStartPositionEqual -gt $testValidStartPositionQuotes -and
         $startPosition -ne -1)
-
+    
     # If $ParameterName was not found i.e. $startPosition is still -1, skip this section as well.
     # We just want the original DSCBlock to be returned.
     if ($startPosition -ne -1) {
         $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
-        
+            
         if ($endOfLinePosition -eq -1)
         {
             $endOfLinePosition = $DSCBlock.Length
         }
         $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
     }
-
+    
     while ($startPosition -ge 0 -and $startPosition -lt $endOfLinePosition)
     {
         $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
-
+    
         if ($endOfLinePosition -eq -1)
         {
             $endOfLinePosition = $DSCBlock.Length
@@ -711,20 +711,40 @@ we should not have commas in between items it contains.
             if ($startPosition -ge 0)
             {
                 $endPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
+                 <# 
+                    When the parameter is a CIM array, it may contain parameter with double quotes
+                    We need to ensure that endPosition does not correspond to such parameter 
+                    by checking if the second character before " is =
+                #>
+                if ($IsCIMArray)
+                {
+                    while ($endPosition -gt 1 -and $DSCBlock.substring($endPosition -2,3) -eq "= `"")
+                    {
+                        #This retrieve the endquote that we skip
+                        $endPosition = $DSCBlock.IndexOf("`"", $endPosition + 1)
+                        #This retrieve the next quote
+                        $endPosition = $DSCBlock.IndexOf("`"", $endPosition + 1)
+                    }
+                }
                 if ($endPosition -lt 0)
                 {
                     $endPosition = $DSCBlock.IndexOf("'", $startPosition + 1)
                 }
-
+                
                 if ($endPosition -ge 0 -and $endPosition -le $endofLinePosition)
                 {
+                    $DSCBlock = $DSCBlock.Remove($startPosition, 1)
+                    $DSCBlock = $DSCBlock.Remove($endPosition - 1, 1)
+
+                    <# This is not required anymore as dealt with previously - keeping it in case of rollback
                     $removeBeginQuotes = $true
                     $removeEndQuotes = $true
                     $NewStartPosition = $startPosition
+
                     if ($IsCIMArray)
                     {
                         $previousEqualSignPosition = $DSCBlock.IndexOf("=", $startPosition - 2)
-
+    
                         # If we have  a CIMArray, and the current quote we are looking at
                         # is exactly 2 positions before it, we skip remove it because it
                         # actually is the quotes surrounding a value of an entry of the
@@ -735,17 +755,18 @@ we should not have commas in between items it contains.
                         {
                             $removeBeginQuotes = $false
                         }
-
+    
                         $previousEqualSignPosition = $DSCBlock.IndexOf("=", $endPosition - 2)
                         $nextNewLinePosition = $DSCBLock.IndexOf("`r`n", $endPosition + 1)
                         if (($previousEqualSignPosition - $endPosition - 2) -lt 0 -or
                             $nextNewLinePosition -eq ($endPosition + 1))
                         {
+    
                             $removeEndQuotes = $false
                             $newStartPosition = $DSCBlock.IndexOf("`r`n", $endPosition)
                         }
                     }
-
+    
                     if ($removeBeginQuotes)
                     {
                         $DSCBlock = $DSCBlock.Remove($startPosition, 1)
@@ -754,8 +775,8 @@ we should not have commas in between items it contains.
                     {
                         $DSCBlock = $DSCBlock.Remove($endPosition - 1, 1)
                     }
-
-                    $startPosition = $newStartPosition
+    
+                    $startPosition = $newStartPosition #>
                 }
                 else
                 {
@@ -764,13 +785,28 @@ we should not have commas in between items it contains.
             }
         }
         $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
+        <# 
+            When the parameter is a CIM array, it may contain parameter with double quotes
+            We need to ensure that startPosition does not correspond to such parameter 
+            by checking if the second character before " is =
+        #>
+        if ($IsCIMArray)
+        {
+            while ($startPosition -gt 1 -and $DSCBlock.Substring($startPosition -2,3) -eq "= `"")
+            {
+                #This retrieve the endquote that we skip
+                $startPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
+                #This retrieve the next quote
+                $startPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
+            }
+        }
     }
-
+    
     if ($IsCIMArray)
     {
         $DSCBlock = $DSCBlock.Replace("},`r`n", "`}`r`n")
         $DSCBlock = $DSCBlock -replace "`r`n\s*[,;]`r`n", "`r`n" # replace "<crlf>[<whitespace>][,;]<crlf>" with "<crlf>"
-
+    
         # There are cases where the closing ')' of a CIMInstance array still has leading quotes.
         # This ensures we clean those out.
         $indexOfProperty = $DSCBlock.IndexOf($ParameterName)
