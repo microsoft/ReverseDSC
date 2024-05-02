@@ -715,10 +715,15 @@ we should not have commas in between items it contains.
                     When the parameter is a CIM array, it may contain parameter with double quotes
                     We need to ensure that endPosition does not correspond to such parameter 
                     by checking if the second character before " is =
+                    Additionally, there might be other values in the DSC block, e.g. from xml,
+                    which contain other properties like <?xml version="1.0"?>, where we do
+                    not want to remove the quotes as well.
                 #>
                 if ($IsCIMArray)
                 {
-                    while ($endPosition -gt 1 -and $DSCBlock.substring($endPosition -2,3) -eq "= `"")
+                    while ($endPosition -gt 1 -and `
+                        ($DSCBlock.substring($endPosition -2,3) -eq "= `"" -or `
+                         $DSCBlock.substring($endPosition -1,2) -eq "=`""))
                     {
                         #This retrieve the endquote that we skip
                         $endPosition = $DSCBlock.IndexOf("`"", $endPosition + 1)
@@ -789,10 +794,15 @@ we should not have commas in between items it contains.
             When the parameter is a CIM array, it may contain parameter with double quotes
             We need to ensure that startPosition does not correspond to such parameter 
             by checking if the second character before " is =
+            Additionally, there might be other values in the DSC block, e.g. from xml,
+            which contain other properties like <?xml version="1.0"?>, where we do
+            not want to remove the quotes as well.
         #>
         if ($IsCIMArray)
         {
-            while ($startPosition -gt 1 -and $DSCBlock.Substring($startPosition -2,3) -eq "= `"")
+            while ($startPosition -gt 1 -and `
+                ($DSCBlock.Substring($startPosition -2,3) -eq "= `"" -or `
+                 $DSCBlock.Substring($startPosition -1,2) -eq "=`""))
             {
                 #This retrieve the endquote that we skip
                 $startPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
