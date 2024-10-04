@@ -162,7 +162,7 @@ Hashtable that contains the list of Key properties and their values.
         {
             if (!$null -eq $NewParams.Item($_))
             {
-                $value = "`"" + $NewParams.Item($_).ToString().Replace("`"", "```"") + "`""
+                $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace("`"", "```"") + "`""
             }
             else
             {
