@@ -283,7 +283,7 @@ Hashtable that contains the list of Key properties and their values.
             {
                 $value = "@("
                 $hash | ForEach-Object {
-                    $value += "`"" + $_ + "`","
+                    $value += "`"" + $_.ToString().Replace('`', '``').Replace("`"", "```"") + "`","
                 }
                 if ($value.Length -gt 2)
                 {
