@@ -722,8 +722,8 @@ we should not have commas in between items it contains.
                 if ($IsCIMArray)
                 {
                     while ($endPosition -gt 1 -and `
-                        ($DSCBlock.substring($endPosition -2,3) -eq "= `"" -or `
-                         $DSCBlock.substring($endPosition -1,2) -eq "=`""))
+                        ($DSCBlock.substring($endPosition -3,4) -eq '= `"' -or `
+                         $DSCBlock.substring($endPosition -2,3) -eq '=`"'))
                     {
                         #This retrieve the endquote that we skip
                         $endPosition = $DSCBlock.IndexOf("`"", $endPosition + 1)
@@ -793,7 +793,7 @@ we should not have commas in between items it contains.
         <# 
             When the parameter is a CIM array, it may contain parameter with double quotes
             We need to ensure that startPosition does not correspond to such parameter 
-            by checking if the second character before " is =
+            by checking if the third character before " is =
             Additionally, there might be other values in the DSC block, e.g. from xml,
             which contain other properties like <?xml version="1.0"?>, where we do
             not want to remove the quotes as well.
@@ -801,8 +801,8 @@ we should not have commas in between items it contains.
         if ($IsCIMArray)
         {
             while ($startPosition -gt 1 -and `
-                ($DSCBlock.Substring($startPosition -2,3) -eq "= `"" -or `
-                 $DSCBlock.Substring($startPosition -1,2) -eq "=`""))
+                ($DSCBlock.Substring($startPosition -3,4) -eq '= `"' -or `
+                 $DSCBlock.Substring($startPosition -2,3) -eq '=`"'))
             {
                 #This retrieve the endquote that we skip
                 $startPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
@@ -829,6 +829,18 @@ we should not have commas in between items it contains.
                 if ($propertyString.EndsWith("}`");"))
                 {
                     $fixedPropertyString = $propertyString.Replace("}`");", "}`r`n            );")
+                    $DSCBlock = $DSCBLock.Replace($propertyString, $fixedPropertyString)
+                }
+            }
+
+            # Correcting escaped double quotes to non-escaped double quotes
+            $indexOfEndOfLine = $DSCBlock.IndexOf(";`r`n", $indexOfProperty)
+            if ($indexOfEndOfLine -gt 0 -and $indexOfEndOfLine -gt $indexOfProperty)
+            {
+                $propertyString = $DSCBlock.Substring($indexOfProperty, $indexOfEndOfLine - $indexOfProperty + 1)
+                if ($propertyString.Contains('`"'))
+                {
+                    $fixedPropertyString = $propertyString.Replace('`"', '"')
                     $DSCBlock = $DSCBLock.Replace($propertyString, $fixedPropertyString)
                 }
             }
