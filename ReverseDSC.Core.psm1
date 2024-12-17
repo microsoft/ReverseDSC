@@ -654,6 +654,13 @@ passing in this parameter because to the function a CIMArray is nothing
 but a System.Object[] and will threat it as it. CIMArray differ in that
 we should not have commas in between items it contains.
 
+.PARAMETER IsCIMObject
+Represents whether or not the parameter to convert to a variable is a
+CIM instance or not. We need to differentiate by explicitely passing
+in this parameter because to the function a CIMArray is nothing
+but a String object and will threat it as it. However it has escaped
+double quotes, which need to be handled properly.
+
 #>
     [CmdletBinding()]
     [OutputType([System.String])]
@@ -668,7 +675,11 @@ we should not have commas in between items it contains.
 
         [Parameter()]
         [System.Boolean]
-        $IsCIMArray = $false
+        $IsCIMArray = $false,
+
+        [Parameter()]
+        [System.Boolean]
+        $IsCIMObject = $false
     )
 
     # If quotes appear before an equal sign, when starting from the assumed start position,
@@ -719,7 +730,7 @@ we should not have commas in between items it contains.
                     which contain other properties like <?xml version="1.0"?>, where we do
                     not want to remove the quotes as well.
                 #>
-                if ($IsCIMArray)
+                if ($IsCIMArray -or $IsCIMObject)
                 {
                     while ($endPosition -gt 1 -and `
                         ($DSCBlock.substring($endPosition -3,4) -eq '= `"' -or `
@@ -798,7 +809,7 @@ we should not have commas in between items it contains.
             which contain other properties like <?xml version="1.0"?>, where we do
             not want to remove the quotes as well.
         #>
-        if ($IsCIMArray)
+        if ($IsCIMArray -or $IsCIMObject)
         {
             while ($startPosition -gt 1 -and `
                 ($DSCBlock.Substring($startPosition -3,4) -eq '= `"' -or `
@@ -812,7 +823,7 @@ we should not have commas in between items it contains.
         }
     }
     
-    if ($IsCIMArray)
+    if ($IsCIMArray -or $IsCIMObject)
     {
         $DSCBlock = $DSCBlock.Replace("},`r`n", "`}`r`n")
         $DSCBlock = $DSCBlock -replace "`r`n\s*[,;]`r`n", "`r`n" # replace "<crlf>[<whitespace>][,;]<crlf>" with "<crlf>"
