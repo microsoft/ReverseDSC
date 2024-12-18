@@ -162,7 +162,7 @@ Hashtable that contains the list of Key properties and their values.
         {
             if (!$null -eq $NewParams.Item($_))
             {
-                $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace("`"", "```"") + "`""
+                $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace("`"", "```"").Replace("`„", "```„").Replace("`“", "```“").Replace("`”", "```”") + "`""
             }
             else
             {
@@ -283,7 +283,7 @@ Hashtable that contains the list of Key properties and their values.
             {
                 $value = "@("
                 $hash | ForEach-Object {
-                    $value += "`"" + $_.ToString().Replace('`', '``').Replace("`"", "```"") + "`","
+                    $value += "`"" + $_.ToString().Replace('`', '``').Replace("`"", "```"").Replace("`„", "```„").Replace("`“", "```“").Replace("`”", "```”") + "`","
                 }
                 if ($value.Length -gt 2)
                 {
