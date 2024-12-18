@@ -723,25 +723,41 @@ double quotes, which need to be handled properly.
             {
                 $endPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
                  <# 
-                    When the parameter is a CIM array, it may contain parameter with double quotes
-                    We need to ensure that endPosition does not correspond to such parameter 
-                    by checking if the second character before " is =
+                    When the parameter is a CIM array, it may contain parameters with double quotes.
+                    We need to ensure that endPosition does not correspond to such instances
+                    by checking if the third character before " is an equal sign (=).
                     Additionally, there might be other values in the DSC block, e.g. from xml,
                     which contain other properties like <?xml version="1.0"?>, where we do
                     not want to remove the quotes as well.
+                    One last case is when there are already escaped double quotes in the string.
+                    In this case, we have to escape these escaped double quotes too for later processing.
                 #>
                 if ($IsCIMArray -or $IsCIMObject)
                 {
                     while ($endPosition -gt 1 -and `
-                        ($DSCBlock.substring($endPosition -3,4) -eq '= `"' -or `
-                         $DSCBlock.substring($endPosition -2,3) -eq '=`"'))
+                        ($DSCBlock.Substring($endPosition -3,4) -eq '= `"' -or `
+                         $DSCBlock.Substring($endPosition -2,3) -eq '=`"'))
                     {
-                        #This retrieve the endquote that we skip
+                        # Get the last quote of the line
+                        $endOfStringPosition = $DSCBlock.IndexOf("```"`r`n", $endPosition + 1) + 1
+                        # This retrieves the endquote that we skip
                         $endPosition = $DSCBlock.IndexOf("`"", $endPosition + 1)
-                        #This retrieve the next quote
+
+                        # Escape all escaped double quotes in the string again
+                        while ($endPosition -ne $endOfStringPosition)
+                        {
+                            $DSCBlock = $DSCBlock.Remove($endPosition, 1)
+                            $DSCBlock = $DSCBlock.Insert($endPosition, "```"")
+                            $endPosition = $DSCBlock.IndexOf("`"", $endPosition + 2)
+                            $endOfStringPosition += 1
+                            $endOfLinePosition += 2
+                        }
+
+                        # This retrieves the next quote
                         $endPosition = $DSCBlock.IndexOf("`"", $endPosition + 1)
                     }
                 }
+
                 if ($endPosition -lt 0)
                 {
                     $endPosition = $DSCBlock.IndexOf("'", $startPosition + 1)
@@ -751,48 +767,6 @@ double quotes, which need to be handled properly.
                 {
                     $DSCBlock = $DSCBlock.Remove($startPosition, 1)
                     $DSCBlock = $DSCBlock.Remove($endPosition - 1, 1)
-
-                    <# This is not required anymore as dealt with previously - keeping it in case of rollback
-                    $removeBeginQuotes = $true
-                    $removeEndQuotes = $true
-                    $NewStartPosition = $startPosition
-
-                    if ($IsCIMArray)
-                    {
-                        $previousEqualSignPosition = $DSCBlock.IndexOf("=", $startPosition - 2)
-    
-                        # If we have  a CIMArray, and the current quote we are looking at
-                        # is exactly 2 positions before it, we skip remove it because it
-                        # actually is the quotes surrounding a value of an entry of the
-                        # CIMArray. If it was the principal quotes we were looking at removing
-                        # the previous equal sign would be further before due to CIMArray being
-                        # declared as ' = @("MSFT_....';
-                        if (($previousEqualSignPosition - $startPosition - 2) -lt 0)
-                        {
-                            $removeBeginQuotes = $false
-                        }
-    
-                        $previousEqualSignPosition = $DSCBlock.IndexOf("=", $endPosition - 2)
-                        $nextNewLinePosition = $DSCBLock.IndexOf("`r`n", $endPosition + 1)
-                        if (($previousEqualSignPosition - $endPosition - 2) -lt 0 -or
-                            $nextNewLinePosition -eq ($endPosition + 1))
-                        {
-    
-                            $removeEndQuotes = $false
-                            $newStartPosition = $DSCBlock.IndexOf("`r`n", $endPosition)
-                        }
-                    }
-    
-                    if ($removeBeginQuotes)
-                    {
-                        $DSCBlock = $DSCBlock.Remove($startPosition, 1)
-                    }
-                    if ($removeEndQuotes)
-                    {
-                        $DSCBlock = $DSCBlock.Remove($endPosition - 1, 1)
-                    }
-    
-                    $startPosition = $newStartPosition #>
                 }
                 else
                 {
@@ -802,9 +776,9 @@ double quotes, which need to be handled properly.
         }
         $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
         <# 
-            When the parameter is a CIM array, it may contain parameter with double quotes
-            We need to ensure that startPosition does not correspond to such parameter 
-            by checking if the third character before " is =
+            When the parameter is a CIM array, it may contain parameters with double quotes.
+            We need to ensure that startPosition does not correspond to such instances
+            by checking if the third character before " is an equal sign (=).
             Additionally, there might be other values in the DSC block, e.g. from xml,
             which contain other properties like <?xml version="1.0"?>, where we do
             not want to remove the quotes as well.
@@ -815,9 +789,9 @@ double quotes, which need to be handled properly.
                 ($DSCBlock.Substring($startPosition -3,4) -eq '= `"' -or `
                  $DSCBlock.Substring($startPosition -2,3) -eq '=`"'))
             {
-                #This retrieve the endquote that we skip
-                $startPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
-                #This retrieve the next quote
+                # This retrieves the endquote that we skip -> Jump to the last quote of the line
+                $startPosition = $DSCBlock.IndexOf("```"`r`n", $startPosition + 1) + 1
+                # This retrieves the next quote
                 $startPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
             }
         }
