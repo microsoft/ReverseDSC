@@ -87,25 +87,28 @@ Name of the parameter in the module we want to determine the Data Type for.
     }
 }
 
-function Get-DSCBlock
-{
-    <#
+<#
 .SYNOPSIS
-Generate the DSC string representing the resource's instance.
+    Generate the DSC string representing the resource's instance.
 
 .DESCRIPTION
-This function is really the core of ReverseDSC. It takes in an array of
-parameters and returns the DSC string that represents the given instance
-of the specified resource.
+    This function is really the core of ReverseDSC. It takes in an array of
+    parameters and returns the DSC string that represents the given instance
+    of the specified resource.
 
 .PARAMETER ModulePath
-Full file path to the .psm1 module we are looking to get an instance of.
-In most cases this will be the full path to the .psm1 file of the DSC resource.
+    Full file path to the .psm1 module we are looking to get an instance of.
+    In most cases this will be the full path to the .psm1 file of the DSC resource.
 
 .PARAMETER Params
-Hashtable that contains the list of Key properties and their values.
+    Hashtable that contains the list of Key properties and their values.
 
+.PARAMETER NoEscape
+    Array of string values that represent the list of parameters that should
+    not be escaped when generating the DSC string.
 #>
+function Get-DSCBlock
+{
     [CmdletBinding()]
     [OutputType([System.String])]
     param(
@@ -115,7 +118,11 @@ Hashtable that contains the list of Key properties and their values.
 
         [Parameter(Mandatory = $true)]
         [System.Collections.Hashtable]
-        $Params
+        $Params,
+
+        [Parameter()]
+        [System.String[]]
+        $NoEscape
     )
 
     # Sort the params by name(key), exclude _metadata_* properties (coming from DSCParser)
@@ -160,13 +167,20 @@ Hashtable that contains the list of Key properties and their values.
         $value = $null
         if ($paramType -eq "System.String" -or $paramType -eq "String" -or $paramType -eq "Guid" -or $paramType -eq 'TimeSpan' -or $paramType -eq 'DateTime')
         {
-            if (!$null -eq $NewParams.Item($_))
+            if ($null -ne $NewParams.Item($_))
             {
-                $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace("`"", "```"") + "`""
+                if ($NoEscape -contains $_)
+                {
+                    $value = $NewParams.Item($_).ToString()
+                }
+                else
+                {
+                    $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace('$', '`$').Replace("`"", "```"") + "`""
+                }
             }
             else
             {
-                $value = "`"" + $NewParams.Item($_) + "`""
+                $value = '""'
             }
         }
         elseif ($paramType -eq "System.Boolean" -or $paramType -eq "Boolean")
@@ -282,8 +296,16 @@ Hashtable that contains the list of Key properties and their values.
             if ($array.Length -gt 0 -and ($null -ne $array[0] -and $array[0].GetType().Name -eq "String" -and $paramType -ne "Microsoft.Management.Infrastructure.CimInstance[]"))
             {
                 $value = "@("
+                $paramName = $_
                 $hash | ForEach-Object {
-                    $value += "`"" + $_.ToString().Replace('`', '``').Replace("`"", "```"") + "`","
+                    if ($NoEscape -contains $paramName)
+                    {
+                        $value += $_.ToString()
+                    }
+                    else
+                    {
+                        $value += "`"" + $_.ToString().Replace('`', '``').Replace('$', '`$').Replace("`"", "```"") + "`","
+                    }
                 }
                 if ($value.Length -gt 2)
                 {
@@ -696,23 +718,23 @@ double quotes, which need to be handled properly.
         }
     } while ($testValidStartPositionEqual -gt $testValidStartPositionQuotes -and
         $startPosition -ne -1)
-    
+
     # If $ParameterName was not found i.e. $startPosition is still -1, skip this section as well.
     # We just want the original DSCBlock to be returned.
     if ($startPosition -ne -1) {
         $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
-            
+
         if ($endOfLinePosition -eq -1)
         {
             $endOfLinePosition = $DSCBlock.Length
         }
         $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
     }
-    
+
     while ($startPosition -ge 0 -and $startPosition -lt $endOfLinePosition)
     {
         $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
-    
+
         if ($endOfLinePosition -eq -1)
         {
             $endOfLinePosition = $DSCBlock.Length
@@ -722,7 +744,7 @@ double quotes, which need to be handled properly.
             if ($startPosition -ge 0)
             {
                 $endPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
-                 <# 
+                 <#
                     When the parameter is a CIM array, it may contain parameters with double quotes.
                     We need to ensure that endPosition does not correspond to such instances
                     by checking if the third character before " is an equal sign (=).
@@ -746,11 +768,11 @@ double quotes, which need to be handled properly.
                         # Escape all escaped double quotes in the string again
                         while ($endPosition -ne $endOfStringPosition)
                         {
-                            $DSCBlock = $DSCBlock.Remove($endPosition, 1)
-                            $DSCBlock = $DSCBlock.Insert($endPosition, "```"")
-                            $endPosition = $DSCBlock.IndexOf("`"", $endPosition + 2)
-                            $endOfStringPosition += 1
-                            $endOfLinePosition += 2
+                            #$DSCBlock = $DSCBlock.Remove($endPosition, 1)
+                            #$DSCBlock = $DSCBlock.Insert($endPosition, "```"")
+                            $endPosition = $DSCBlock.IndexOf("`"", $endPosition + 1)
+                            #$endOfStringPosition += 1
+                            #$endOfLinePosition += 2
                         }
 
                         # This retrieves the next quote
@@ -762,7 +784,7 @@ double quotes, which need to be handled properly.
                 {
                     $endPosition = $DSCBlock.IndexOf("'", $startPosition + 1)
                 }
-                
+
                 if ($endPosition -ge 0 -and $endPosition -le $endofLinePosition)
                 {
                     $DSCBlock = $DSCBlock.Remove($startPosition, 1)
@@ -775,7 +797,7 @@ double quotes, which need to be handled properly.
             }
         }
         $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
-        <# 
+        <#
             When the parameter is a CIM array, it may contain parameters with double quotes.
             We need to ensure that startPosition does not correspond to such instances
             by checking if the third character before " is an equal sign (=).
@@ -796,12 +818,12 @@ double quotes, which need to be handled properly.
             }
         }
     }
-    
+
     if ($IsCIMArray -or $IsCIMObject)
     {
         $DSCBlock = $DSCBlock.Replace("},`r`n", "`}`r`n")
         $DSCBlock = $DSCBlock -replace "`r`n\s*[,;]`r`n", "`r`n" # replace "<crlf>[<whitespace>][,;]<crlf>" with "<crlf>"
-    
+
         # There are cases where the closing ')' of a CIMInstance array still has leading quotes.
         # This ensures we clean those out.
         $indexOfProperty = $DSCBlock.IndexOf($ParameterName)
