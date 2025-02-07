@@ -87,25 +87,24 @@ Name of the parameter in the module we want to determine the Data Type for.
     }
 }
 
+<#
+.SYNOPSIS
+    Generate the DSC string representing the resource's instance.
+.DESCRIPTION
+    This function is really the core of ReverseDSC. It takes in an array of
+    parameters and returns the DSC string that represents the given instance
+    of the specified resource.
+.PARAMETER ModulePath
+    Full file path to the .psm1 module we are looking to get an instance of.
+    In most cases this will be the full path to the .psm1 file of the DSC resource.
+.PARAMETER Params
+    Hashtable that contains the list of Key properties and their values.
+.PARAMETER NoEscape
+    Array of string values that represent the list of parameters that should
+    not be escaped when generating the DSC string.
+#>
 function Get-DSCBlock
 {
-    <#
-.SYNOPSIS
-Generate the DSC string representing the resource's instance.
-
-.DESCRIPTION
-This function is really the core of ReverseDSC. It takes in an array of
-parameters and returns the DSC string that represents the given instance
-of the specified resource.
-
-.PARAMETER ModulePath
-Full file path to the .psm1 module we are looking to get an instance of.
-In most cases this will be the full path to the .psm1 file of the DSC resource.
-
-.PARAMETER Params
-Hashtable that contains the list of Key properties and their values.
-
-#>
     [CmdletBinding()]
     [OutputType([System.String])]
     param(
@@ -115,7 +114,11 @@ Hashtable that contains the list of Key properties and their values.
 
         [Parameter(Mandatory = $true)]
         [System.Collections.Hashtable]
-        $Params
+        $Params,
+
+        [Parameter()]
+        [System.String[]]
+        $NoEscape
     )
 
     # Sort the params by name(key), exclude _metadata_* properties (coming from DSCParser)
@@ -160,13 +163,20 @@ Hashtable that contains the list of Key properties and their values.
         $value = $null
         if ($paramType -eq "System.String" -or $paramType -eq "String" -or $paramType -eq "Guid" -or $paramType -eq 'TimeSpan' -or $paramType -eq 'DateTime')
         {
-            if (!$null -eq $NewParams.Item($_))
+            if ($null -ne $NewParams.Item($_))
             {
-                $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace("`"", "```"") + "`""
+                if ($NoEscape -contains $_)
+                {
+                    $value = $NewParams.Item($_).ToString()
+                }
+                else
+                {
+                    $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace('$', '`$').Replace("`"", "```"") + "`""
+                }
             }
             else
             {
-                $value = "`"" + $NewParams.Item($_) + "`""
+                $value = '""'
             }
         }
         elseif ($paramType -eq "System.Boolean" -or $paramType -eq "Boolean")
@@ -282,10 +292,19 @@ Hashtable that contains the list of Key properties and their values.
             if ($array.Length -gt 0 -and ($null -ne $array[0] -and $array[0].GetType().Name -eq "String" -and $paramType -ne "Microsoft.Management.Infrastructure.CimInstance[]"))
             {
                 $value = "@("
+                $paramName = $_
                 $hash | ForEach-Object {
-                    $value += "`"" + $_.ToString().Replace('`', '``').Replace("`"", "```"") + "`","
+                    if ($NoEscape -contains $paramName)
+                    {
+                        $value += $_.ToString()
+                    }
+                    else
+                    {
+                        $value += "`"" + $_.ToString().Replace('`', '``').Replace('$', '`$').Replace("`"", "```"") + "`","
+                    }
                 }
-                if ($value.Length -gt 2)
+                # Remove trailing comma if it exists
+                if ($value.Length -gt 2 -and $value.EndsWith(","))
                 {
                     $value = $value.Substring(0, $value.Length - 1)
                 }
@@ -316,7 +335,8 @@ Hashtable that contains the list of Key properties and their values.
                         }
                         $value += "$str; "
                     }
-                    if ($value.Length -gt 2)
+                    # Remove trailing semicolon if it exists
+                    if ($value.Length -gt 2 -and $value.EndsWith("; "))
                     {
                         $value = $value.Substring(0, $value.Length - 2)
                     }
@@ -751,48 +771,6 @@ double quotes, which need to be handled properly.
                 {
                     $DSCBlock = $DSCBlock.Remove($startPosition, 1)
                     $DSCBlock = $DSCBlock.Remove($endPosition - 1, 1)
-
-                    <# This is not required anymore as dealt with previously - keeping it in case of rollback
-                    $removeBeginQuotes = $true
-                    $removeEndQuotes = $true
-                    $NewStartPosition = $startPosition
-
-                    if ($IsCIMArray)
-                    {
-                        $previousEqualSignPosition = $DSCBlock.IndexOf("=", $startPosition - 2)
-    
-                        # If we have  a CIMArray, and the current quote we are looking at
-                        # is exactly 2 positions before it, we skip remove it because it
-                        # actually is the quotes surrounding a value of an entry of the
-                        # CIMArray. If it was the principal quotes we were looking at removing
-                        # the previous equal sign would be further before due to CIMArray being
-                        # declared as ' = @("MSFT_....';
-                        if (($previousEqualSignPosition - $startPosition - 2) -lt 0)
-                        {
-                            $removeBeginQuotes = $false
-                        }
-    
-                        $previousEqualSignPosition = $DSCBlock.IndexOf("=", $endPosition - 2)
-                        $nextNewLinePosition = $DSCBLock.IndexOf("`r`n", $endPosition + 1)
-                        if (($previousEqualSignPosition - $endPosition - 2) -lt 0 -or
-                            $nextNewLinePosition -eq ($endPosition + 1))
-                        {
-    
-                            $removeEndQuotes = $false
-                            $newStartPosition = $DSCBlock.IndexOf("`r`n", $endPosition)
-                        }
-                    }
-    
-                    if ($removeBeginQuotes)
-                    {
-                        $DSCBlock = $DSCBlock.Remove($startPosition, 1)
-                    }
-                    if ($removeEndQuotes)
-                    {
-                        $DSCBlock = $DSCBlock.Remove($endPosition - 1, 1)
-                    }
-    
-                    $startPosition = $newStartPosition #>
                 }
                 else
                 {
