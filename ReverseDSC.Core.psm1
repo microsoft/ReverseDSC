@@ -118,7 +118,11 @@ function Get-DSCBlock
 
         [Parameter()]
         [System.String[]]
-        $NoEscape
+        $NoEscape,
+
+        [Parameter()]
+        [switch]
+        $AllowVariablesInStrings
     )
 
     # Sort the params by name(key), exclude _metadata_* properties (coming from DSCParser)
@@ -171,7 +175,14 @@ function Get-DSCBlock
                 }
                 else
                 {
-                    $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace('$', '`$').Replace("`"", "```"") + "`""
+                    if ($AllowVariablesInStrings)
+                    {
+                        $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace("`"", "```"") + "`""
+                    }
+                    else
+                    {
+                        $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace('$', '`$').Replace("`"", "```"") + "`""
+                    }
                 }
             }
             else
@@ -300,7 +311,14 @@ function Get-DSCBlock
                     }
                     else
                     {
-                        $value += "`"" + $_.ToString().Replace('`', '``').Replace('$', '`$').Replace("`"", "```"") + "`","
+                        if ($AllowVariablesInStrings)
+                        {
+                            $value += "`"" + $_.ToString().Replace('`', '``').Replace("`"", "```"") + "`","
+                        }
+                        else
+                        {
+                            $value += "`"" + $_.ToString().Replace('`', '``').Replace('$', '`$').Replace("`"", "```"") + "`","
+                        }
                     }
                 }
                 # Remove trailing comma if it exists
