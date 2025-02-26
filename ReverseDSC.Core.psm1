@@ -175,13 +175,26 @@ function Get-DSCBlock
                 }
                 else
                 {
+                    #0x201E = „
+                    #0x201C = “
+                    #0x201D = ”
                     if ($AllowVariablesInStrings)
                     {
-                        $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace('„', '`„').Replace('“', '`“').Replace('”', '`”').Replace("`"", "```"") + "`""
+                        $newString = $NewParams.Item($_).ToString().Replace('`', '``')
+                        $newString = $newString.Replace("$([char]0x201E)", "``$([char]0x201E)")
+                        $newString = $newString.Replace("$([char]0x201C)", "``$([char]0x201C)")
+                        $newString = $newString.Replace("$([char]0x201D)", "``$([char]0x201D)")
+                        $newString = $newString.Replace("`"", "```"")
+                        $value = "`"" + $newString + "`""
                     }
                     else
                     {
-                        $value = "`"" + $NewParams.Item($_).ToString().Replace('`', '``').Replace('$', '`$').Replace('„', '`„').Replace('“', '`“').Replace('”', '`”').Replace("`"", "```"") + "`""
+                        $newString = $NewParams.Item($_).ToString().Replace('`', '``').Replace('$', '`$')
+                        $newString = $newString.Replace("$([char]0x201E)", "``$([char]0x201E)")
+                        $newString = $newString.Replace("$([char]0x201C)", "``$([char]0x201C)")
+                        $newString = $newString.Replace("$([char]0x201D)", "``$([char]0x201D)")
+                        $newString = $newString.Replace("`"", "```"")
+                        $value = "`"" + $newString + "`""
                     }
                 }
             }
@@ -311,13 +324,26 @@ function Get-DSCBlock
                     }
                     else
                     {
+                        #0x201E = „
+                        #0x201C = “
+                        #0x201D = ”
                         if ($AllowVariablesInStrings)
                         {
-                            $value += "`"" + $_.ToString().Replace('`', '``').Replace('„', '`„').Replace('“', '`“').Replace('”', '`”').Replace("`"", "```"") + "`","
+                            $newString = $_.ToString().Replace('`', '``')
+                            $newString = $newString.Replace("$([char]0x201E)", "``$([char]0x201E)")
+                            $newString = $newString.Replace("$([char]0x201C)", "``$([char]0x201C)")
+                            $newString = $newString.Replace("$([char]0x201D)", "``$([char]0x201D)")
+                            $newString = $newString.Replace("`"", "```"")
+                            $value += "`"" + $newString + "`","
                         }
                         else
                         {
-                            $value += "`"" + $_.ToString().Replace('`', '``').Replace('$', '`$').Replace('„', '`„').Replace('“', '`“').Replace('”', '`”').Replace("`"", "```"") + "`","
+                            $newString = $_.ToString().Replace('`', '``').Replace('$', '`$')
+                            $newString = $newString.Replace("$([char]0x201E)", "``$([char]0x201E)")
+                            $newString = $newString.Replace("$([char]0x201C)", "``$([char]0x201C)")
+                            $newString = $newString.Replace("$([char]0x201D)", "``$([char]0x201D)")
+                            $newString = $newString.Replace("`"", "```"")
+                            $value += "`"" + $newString + "`","
                         }
                     }
                 }
