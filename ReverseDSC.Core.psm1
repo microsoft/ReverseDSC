@@ -223,7 +223,7 @@ function Get-DSCBlock
                     }
                     else
                     {
-                        if ($NewParams.Item($_).UserName.Contains("@") -and !$NewParams.Item($_).UserName.COntains("\"))
+                        if ($NewParams.Item($_).UserName.Contains("@") -and -not $NewParams.Item($_).UserName.Contains("\"))
                         {
                             $value = "`$Creds" + ($NewParams.Item($_).UserName.Split('@'))[0]
                         }
@@ -258,11 +258,42 @@ function Get-DSCBlock
         elseif ($paramType -eq "System.String[]" -or $paramType -eq "String[]" -or $paramType -eq "ArrayList" -or $paramType -eq "List``1")
         {
             $hash = $NewParams.Item($_)
-            if ($hash -and !$hash.ToString().StartsWith("`$ConfigurationData."))
+            if ($hash -and -not $hash.ToString().StartsWith("`$ConfigurationData."))
             {
                 $value = "@("
                 $hash | ForEach-Object {
-                    $value += "`"" + $_ + "`","
+                    if ($null -ne $_)
+                    {
+                        if ($NoEscape -contains $hash)
+                        {
+                            $innerValue = $_
+                        }
+                        else
+                        {
+                            #0x201E = „
+                            #0x201C = “
+                            #0x201D = ”
+                            if ($AllowVariablesInStrings)
+                            {
+                                $newString = $_.Replace('`', '``')
+                                $newString = $newString.Replace("$([char]0x201E)", "``$([char]0x201E)")
+                                $newString = $newString.Replace("$([char]0x201C)", "``$([char]0x201C)")
+                                $newString = $newString.Replace("$([char]0x201D)", "``$([char]0x201D)")
+                                $newString = $newString.Replace("`"", "```"")
+                                $innerValue = $newString
+                            }
+                            else
+                            {
+                                $newString = $_.Replace('`', '``').Replace('$', '`$')
+                                $newString = $newString.Replace("$([char]0x201E)", "``$([char]0x201E)")
+                                $newString = $newString.Replace("$([char]0x201C)", "``$([char]0x201C)")
+                                $newString = $newString.Replace("$([char]0x201D)", "``$([char]0x201D)")
+                                $newString = $newString.Replace("`"", "```"")
+                                $innerValue = $newString
+                            }
+                        }
+                    }
+                    $value += "`"" + $innerValue + "`","
                 }
                 if ($value.Length -gt 2)
                 {
@@ -499,7 +530,7 @@ In most cases this will be the full path to the .psm1 file of the DSC resource.
                     }
                 }
                 $attributes | ForEach-Object {
-                    if (!$found)
+                    if (-not $found)
                     {
                         if ($_.TypeName.FullName -eq "System.String" -or $_.TypeName.FullName -eq "String")
                         {
@@ -655,7 +686,7 @@ Username to add to the central list of required credentials.
         [System.String]
         $UserName
     )
-    if (!$Global:CredsRepo.Contains($UserName.ToLower()))
+    if (-not $Global:CredsRepo.Contains($UserName.ToLower()))
     {
         $Global:CredsRepo += $UserName.ToLower()
     }
@@ -760,23 +791,23 @@ double quotes, which need to be handled properly.
         }
     } while ($testValidStartPositionEqual -gt $testValidStartPositionQuotes -and
         $startPosition -ne -1)
-    
+
     # If $ParameterName was not found i.e. $startPosition is still -1, skip this section as well.
     # We just want the original DSCBlock to be returned.
     if ($startPosition -ne -1) {
         $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
-            
+
         if ($endOfLinePosition -eq -1)
         {
             $endOfLinePosition = $DSCBlock.Length
         }
         $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
     }
-    
+
     while ($startPosition -ge 0 -and $startPosition -lt $endOfLinePosition)
     {
         $endOfLinePosition = $DSCBlock.IndexOf(";`r`n", $startPosition)
-    
+
         if ($endOfLinePosition -eq -1)
         {
             $endOfLinePosition = $DSCBlock.Length
@@ -786,9 +817,9 @@ double quotes, which need to be handled properly.
             if ($startPosition -ge 0)
             {
                 $endPosition = $DSCBlock.IndexOf("`"", $startPosition + 1)
-                 <# 
+                 <#
                     When the parameter is a CIM array, it may contain parameter with double quotes
-                    We need to ensure that endPosition does not correspond to such parameter 
+                    We need to ensure that endPosition does not correspond to such parameter
                     by checking if the second character before " is =
                     Additionally, there might be other values in the DSC block, e.g. from xml,
                     which contain other properties like <?xml version="1.0"?>, where we do
@@ -797,8 +828,8 @@ double quotes, which need to be handled properly.
                 if ($IsCIMArray -or $IsCIMObject)
                 {
                     while ($endPosition -gt 1 -and `
-                        ($DSCBlock.substring($endPosition -3,4) -eq '= `"' -or `
-                         $DSCBlock.substring($endPosition -2,3) -eq '=`"'))
+                        ($DSCBlock.Substring($endPosition -3,4) -eq '= `"' -or `
+                         $DSCBlock.Substring($endPosition -2,3) -eq '=`"'))
                     {
                         #This retrieve the endquote that we skip
                         $endPosition = $DSCBlock.IndexOf("`"", $endPosition + 1)
@@ -810,7 +841,7 @@ double quotes, which need to be handled properly.
                 {
                     $endPosition = $DSCBlock.IndexOf("'", $startPosition + 1)
                 }
-                
+
                 if ($endPosition -ge 0 -and $endPosition -le $endofLinePosition)
                 {
                     $DSCBlock = $DSCBlock.Remove($startPosition, 1)
@@ -823,9 +854,9 @@ double quotes, which need to be handled properly.
             }
         }
         $startPosition = $DSCBlock.IndexOf("`"", $startPosition)
-        <# 
+        <#
             When the parameter is a CIM array, it may contain parameter with double quotes
-            We need to ensure that startPosition does not correspond to such parameter 
+            We need to ensure that startPosition does not correspond to such parameter
             by checking if the third character before " is =
             Additionally, there might be other values in the DSC block, e.g. from xml,
             which contain other properties like <?xml version="1.0"?>, where we do
@@ -844,12 +875,12 @@ double quotes, which need to be handled properly.
             }
         }
     }
-    
+
     if ($IsCIMArray -or $IsCIMObject)
     {
         $DSCBlock = $DSCBlock.Replace("},`r`n", "`}`r`n")
         $DSCBlock = $DSCBlock -replace "`r`n\s*[,;]`r`n", "`r`n" # replace "<crlf>[<whitespace>][,;]<crlf>" with "<crlf>"
-    
+
         # There are cases where the closing ')' of a CIMInstance array still has leading quotes.
         # This ensures we clean those out.
         $indexOfProperty = $DSCBlock.IndexOf($ParameterName)
@@ -941,7 +972,7 @@ top of the parameter.
         $ConfigurationDataContent.Add($Node, @{})
         $ConfigurationDataContent[$Node].Add("Entries", @{})
     }
-    if (!$ConfigurationDataContent[$Node].Entries.ContainsKey($Key))
+    if (-not $ConfigurationDataContent[$Node].Entries.ContainsKey($Key))
     {
         $ConfigurationDataContent[$Node].Entries.Add($Key, @{Value = $Value; Description = $Description })
     }
@@ -1220,7 +1251,7 @@ Name of the user to add to the central list of required users.
         [System.String]
         $UserName
     )
-    if (!$Global:AllUsers.Contains($UserName))
+    if (-not $Global:AllUsers.Contains($UserName))
     {
         $Global:AllUsers += $UserName
     }
