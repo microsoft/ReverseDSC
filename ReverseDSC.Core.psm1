@@ -313,7 +313,7 @@ function Get-DSCBlock
                 }
             }
         }
-        elseif ($paramType -eq "System.UInt32[]")
+        elseif ($paramType -match "Int.*\[\]")
         {
             $hash = $NewParams.Item($_)
             if ($hash)
