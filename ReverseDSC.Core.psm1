@@ -967,15 +967,14 @@ top of the parameter.
         [System.String]
         $Description
     )
+
     if ($null -eq $ConfigurationDataContent[$Node])
     {
         $ConfigurationDataContent.Add($Node, @{})
         $ConfigurationDataContent[$Node].Add("Entries", @{})
     }
-    if (-not $ConfigurationDataContent[$Node].Entries.ContainsKey($Key))
-    {
-        $ConfigurationDataContent[$Node].Entries.Add($Key, @{Value = $Value; Description = $Description })
-    }
+
+    $ConfigurationDataContent[$Node].Entries[$Key] = @{ Value = $Value; Description = $Description }
 }
 
 function Get-ConfigurationDataEntry
