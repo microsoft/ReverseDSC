@@ -971,7 +971,7 @@ top of the parameter.
     if ($null -eq $ConfigurationDataContent[$Node])
     {
         $ConfigurationDataContent.Add($Node, @{})
-        $ConfigurationDataContent[$Node].Add("Entries", @{})
+        $ConfigurationDataContent[$Node].Add("Entries", [ordered]@{})
     }
 
     $ConfigurationDataContent[$Node].Entries[$Key] = @{ Value = $Value; Description = $Description }
