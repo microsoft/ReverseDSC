@@ -1054,7 +1054,7 @@ hashtable for the ConfigurationData content as a formatted string.
         $psd1Content += "            PSDscAllowDomainUser        = `$true;`r`n"
         $psd1Content += "            #region Parameters`r`n"
         $keyValuePair = $ConfigurationDataContent[$node].Entries
-        foreach ($key in $keyValuePair.Keys)
+        foreach ($key in $keyValuePair.Keys | Sort-Object)
         {
             if ($null -ne $keyValuePair[$key].Description)
             {
@@ -1088,7 +1088,7 @@ hashtable for the ConfigurationData content as a formatted string.
     {
         $psd1Content += "        @{`r`n"
         $keyValuePair = $ConfigurationDataContent[$node].Entries
-        foreach ($key in $keyValuePair.Keys)
+        foreach ($key in $keyValuePair.Keys | Sort-Object)
         {
             try
             {
