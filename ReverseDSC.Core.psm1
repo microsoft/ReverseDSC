@@ -967,15 +967,14 @@ top of the parameter.
         [System.String]
         $Description
     )
+
     if ($null -eq $ConfigurationDataContent[$Node])
     {
         $ConfigurationDataContent.Add($Node, @{})
-        $ConfigurationDataContent[$Node].Add("Entries", @{})
+        $ConfigurationDataContent[$Node].Add("Entries", [ordered]@{})
     }
-    if (-not $ConfigurationDataContent[$Node].Entries.ContainsKey($Key))
-    {
-        $ConfigurationDataContent[$Node].Entries.Add($Key, @{Value = $Value; Description = $Description })
-    }
+
+    $ConfigurationDataContent[$Node].Entries[$Key] = @{ Value = $Value; Description = $Description }
 }
 
 function Get-ConfigurationDataEntry
@@ -1055,7 +1054,7 @@ hashtable for the ConfigurationData content as a formatted string.
         $psd1Content += "            PSDscAllowDomainUser        = `$true;`r`n"
         $psd1Content += "            #region Parameters`r`n"
         $keyValuePair = $ConfigurationDataContent[$node].Entries
-        foreach ($key in $keyValuePair.Keys)
+        foreach ($key in $keyValuePair.Keys | Sort-Object)
         {
             if ($null -ne $keyValuePair[$key].Description)
             {
@@ -1089,7 +1088,7 @@ hashtable for the ConfigurationData content as a formatted string.
     {
         $psd1Content += "        @{`r`n"
         $keyValuePair = $ConfigurationDataContent[$node].Entries
-        foreach ($key in $keyValuePair.Keys)
+        foreach ($key in $keyValuePair.Keys | Sort-Object)
         {
             try
             {
