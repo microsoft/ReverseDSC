@@ -584,7 +584,7 @@ function Get-DSCBlock
             {
                 $value = ConvertTo-DSCHashtableValue -Value $paramValue
             }
-            '^(System\.String\[\]|String\[\]|ArrayList|List``1)$'
+            '^(System\.String\[\]|String\[\]|ArrayList|List`1)$'
             {
                 if ($paramValue.ToString().StartsWith("`$ConfigurationData."))
                 {
