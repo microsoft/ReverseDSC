@@ -6,45 +6,47 @@
 # Generated on: 2026/01/19
 #
 @{
-    ModuleVersion = '2.0.0.31'
-    GUID = '6c1176a0-4fac-4134-8ca2-3fa8a21a7b90'
-    Author = 'Microsoft Corporation'
-    CompanyName = 'Microsoft Corporation'
-    Copyright = '(c) 2015-2026 Microsoft Corporation. All rights reserved.'
-    Description = 'This DSC module is used to extract the DSC Configuration of existing environments.'
-    PowerShellVersion = '4.0'
-    NestedModules = @("ReverseDSC.Core.psm1")
-    CmdletsToExport = @()
-    FunctionsToExport = @("Get-DSCParamType", 
-                        "Get-DSCBlock",
-                        "Get-DSCFakeParameters",
-                        "Get-DSCDependsOnBlock",
-                        "Export-TargetResource",
-                        "Get-ResourceFriendlyName",
-                        "Get-Credentials",
-                        "Resolve-Credentials",
-                        "Save-Credentials",
-                        "Test-Credentials",
-                        "Convert-DSCStringParamToVariable",
-                        "Get-ConfigurationDataContent"
-                        "New-ConfigurationDataDocument",
-                        "Add-ConfigurationDataEntry",
-                        "Get-ConfigurationDataEntry",
-                        "Add-ReverseDSCUserName")
-    AliasesToExport = @()
-    PrivateData = @{
+    ModuleVersion     = '2.0.0.31'
+    GUID              = '6c1176a0-4fac-4134-8ca2-3fa8a21a7b90'
+    Author            = 'Microsoft Corporation'
+    CompanyName       = 'Microsoft Corporation'
+    Copyright         = '(c) 2015-2026 Microsoft Corporation. All rights reserved.'
+    Description       = 'This DSC module is used to extract the DSC Configuration of existing environments.'
+    PowerShellVersion = '5.1'
+    NestedModules     = @("ReverseDSC.Core.psm1")
+    CmdletsToExport   = @()
+    FunctionsToExport = @(
+        "Clear-ConfigurationDataContent",
+        "Clear-ReverseDSCUserNames",
+        "Get-DSCParamType",
+        "Get-DSCBlock",
+        "Get-DSCFakeParameters",
+        "Get-DSCDependsOnBlock",
+        "Get-Credentials",
+        "Resolve-Credentials",
+        "Save-Credentials",
+        "Test-Credentials",
+        "Convert-DSCStringParamToVariable",
+        "Get-ConfigurationDataContent",
+        "New-ConfigurationDataDocument",
+        "Add-ConfigurationDataEntry",
+        "Get-ConfigurationDataEntry",
+        "Add-ReverseDSCUserName"
+    )
+    AliasesToExport   = @()
+    PrivateData       = @{
         PSData = @{
 
-            Tags = @('DesiredStateConfiguration', 'DSC', 'DSCResourceKit', 'DSCResource', 'ReverseDSC')
+            Tags         = @('DesiredStateConfiguration', 'DSC', 'DSCResourceKit', 'DSCResource', 'ReverseDSC')
 
             # A URL to the license for this module.
-            LicenseUri = ''
+            LicenseUri   = 'https://github.com/microsoft/ReverseDSC/blob/master/LICENSE'
 
             # A URL to the main website for this project.
-            ProjectUri = 'https://Github.com/Microsoft/ReverseDSC'
+            ProjectUri   = 'https://github.com/microsoft/ReverseDSC'
 
             # A URL to an icon representing this module.
-            IconUri = 'https://github.com/Microsoft/ReverseDSC/blob/master/Images/DSCModuleIcon.png?raw=true'
+            IconUri      = 'https://github.com/microsoft/ReverseDSC/blob/master/Images/DSCModuleIcon.png?raw=true'
 
             ReleaseNotes = 'Add european localized quotation marks.'
 
